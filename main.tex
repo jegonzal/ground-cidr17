@@ -1,5 +1,6 @@
 \documentclass{sig-alternate}
 \usepackage[utf8]{inputenc}
+\usepackage{times}
 
 \begin{document}
 \conferenceinfo{CIDR '17}{January 8-11, 2017, Santa Cruz, CA, USA}
@@ -7,18 +8,21 @@
 \title{Grounding Big Data with Data Context Services}
 \numberofauthors{3}
 \author{
-\alignauthor{Vikram Sreekanti\\
-\affaddr{U.C. Berkeley}\\
-\email{vikrams@berkeley.edu}}
-\alignauthor{Joseph M. Hellerstein\\
-\affaddr{U.C. Berkeley}\\
-\email{hellerstein@berkeley.edu}}
-\alignauthor{Joseph E. Gonazlez\\
-\affaddr{U.C. Berkeley}\\
-\email{jegonzal@berkeley.edu}}
+Groundlings
 }
 
 \maketitle
 
-Testing 123.
+\section{Metadata Crisis, Context Opportunity}
+The open-source Big Data movement, spearheaded by projects like Hadoop and Cassandra, is often discussed in terms of changes in usage: the "three V's" of data being captured, and the agile working style typified by "schema-on-use" and polyglot programming models.
+
+Equally interesting, but much less widely discussed, is a profound shift toward a decoupled software architecture. Traditionally, database systems (however elegantly factored internally) were consumed as monolithic stacks of component functionality, including: a storage engine with consistency guarantees, a dataflow engine, a language compiler and optimizer, an execution scheduler/runtime, and facilities for data ingest and queueing.  By contrast, in the Big Data architectures today, nearly all of these components are swappable. Moreover, the set of alternative implementations for the components is evolving over time. This began at the language and optimization layers (MapReduce, Hive, Pig, etc.)  has been particularly active in recent years at the dataflow engine layer (MapReduce, Impala, Drill, Spark, Flink). The decoupled architecture is healthy for innovation and specialization, and has been embraced by developers and customers, who often support multiple alternatives for each component.
+
+One side-effect of this decoupling is that there is no agreed-upon service for even the most basic metadata in Big Data systems; the only widely-used metadata service in this arena is the Hive Metastore, which only captures relational schemas. As a result, most "Data Lake" projects lack any comprehensive catalog of their contents. For major customers and the vendors who support them, this Big Metadata problem is hitting a crisis point.  Two major problems emerge:
+\begin{itemize}
+\item \textbf{Decreased Productivity.} The promise of the Data Lake is that data can be easily captured, and harnessed by analysts for value. In the absence of metadata, analysts are often unable to discover what data exists, much less how it may have been previously structured, cleansed and analyzed by their peers. Many organizations speak of "tribal knowledge" as the way that this information gets stored and disseminated among analysts. Clearly this leads to wasted work and lost opportunities in analytic organizations.
+\item \textbf{Increased Governance Risk.} Data management necessarily entails governing the security of data: who sees it, what they do with it, where they put it, how they share it, and so on. In some cases this governance metadata is 
+
+In the absence of a standard place to ``write down'' this information, it becomes impossible to track and govern these issues.
+\end{itemize}
 \end{document}
