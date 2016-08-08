@@ -8,7 +8,7 @@
 \conferenceinfo{CIDR '17}{January 8-11, 2017, Santa Cruz, CA, USA}
 \newcommand{\smallitem}[1]{\vspace{1em}\noindent\textbf{#1}}
 \newcommand{\smallitembot}{\vspace{1em}\noindent}
-
+\bibliographystyle{abbrv}
 
 
 \title{Grounding Big Data with Data Context Services}
@@ -18,6 +18,11 @@ Groundlings
 }
 
 \maketitle
+
+\begin{abstract}
+Ground is an open-source data context service, motivated by our experiences in the Big Data ecosystem. By data context, we refer to all the peripheral information that informs the use of data, going well beyond traditional metadata.
+The way we use data has changed philosophically and practically in the last decade, creating an opportunity for new data context services to foster further innovation in Big Data systems and applications. We provide motivation and design guidelines, present our initial design of a common metamodel and API, and explore the current state of the storage solutions that could serve the needs of a data context service. Throughout, we highlight opportunities for new research and engineering solutions.
+\end{abstract}
 
 \section{From Metadata to Context}
 The open-source Big Data movement, spearheaded by Apache Hadoop, is often discussed in terms of changes in usage: the ``three V's'' of data being captured, and the agile working style typified by ``schema-on-use'' and polyglot programming models.
@@ -62,56 +67,68 @@ To illustrate the benefits of data context, consider the following scenario. It 
 
 Janet 
 % plans to purchase a social media ``firehose'' feed for her analysis. To start, though, she 
-begins by downloading a small sample of a social media feed from a free API into the data lake. Her data catalog application notifies her that the bank has a large dataset of very similar data from the previous month. She finds this sufficient for her purposes; no need to pay for another feed. She then begins searching the catalog for historical data on customer churn: what is available, and who has access to it?  As she explores candidate schemas and data samples, she is notified that one of her colleagues has access to many of these datasets, and has previously joined one of them with weather data. She decides to start with that dataset as well, and compare notes with her colleague later on.  In this scenario, the catalog application was particularly successful because it had access to broad context: not just a large corpus of data, but structured schemas for that data based on prior (schema-on-)use, as well as usage data capturing relationships between users, data and actions.
+begins by downloading a small sample of a social media feed from a free API into the data lake. Her data catalog application searches the context service for previously-defined schemas and data sketches, and notifies her that the data lake has a similar feed from the previous month. 
+% Looking at that data, she finds it sufficient for her purposes; no need to pay for another feed. 
+She then begins using the application to search the context service for historical data on customer churn: what is available, and who has access to it?  As she explores candidate schemas and data samples, the application looks up usage data in the context service and notifies Janet that one of her colleagues has access to many of these datasets, and has previously joined one of them with weather data. Janet decides to start with that dataset as well, and compare notes with her colleague later on.  
+% In this scenario, the catalog application was particularly successful because it had access to broad context: not just a large corpus of raw data, but structured schemas for transformed versions of that data based on prior (schema-on-)use, as well as usage data capturing relationships between users, data and actions.
 
-Once Janet chooses particular datasets to focus on, she begins to prepare them for analysis using a data wrangling application. As is typical, the social media feed is semi-structured and deeply nested; the application suggests unnesting attributes and pivoting them into tabular form.  The application then makes her aware of a number of posts from a GPS location at a great distance from any of  the bank's branches. Janet is given suggestions to generate new columns derived from the social text using code for entity extraction and sentiment analysis written by her data science colleagues. She is warned that certain attributes of the customer churn data were marked confidential by another analyst, and should perhaps be masked. Finally, when she is ready to join the social media names against the bank customer names, the application helps identify and standardize the join keys appropriately. The data wrangling application benefited from context it would not have seen as an isolated component: reference data like geographic distributions of branches, repositories of data science routines, and the analytic context that the datasets being wrangled came from the data lake with security annotations. \emph{Would be nicer to get an analytic context about Janet's behavior.}
+Once Janet chooses particular datasets to focus on, she begins to prepare them for analysis using a data wrangling application. As is typical, the social media feed is semi-structured and deeply nested; the wrangling application searches the context store for previous scripts on similarly-structured data, and suggests unnesting attributes and pivoting them into tabular form.  Recognizing location data in Janet's dataset, the application then consults a geo-reference data in the context store and makes her aware of a that many of the GPS locations in her data set are very distance from any of the bank's branches, and may be candidates for cleaning. The application looks at type-specific analysis routines in the context store, and suggests to Janet that she can generate new columns derived from the social text using code for entity extraction and sentiment analysis written by her data science colleagues. Based on security information in the context service, Janet is warned that certain attributes of the customer churn data were marked confidential by another analyst, and should perhaps be masked. Finally, when she is ready to join the social media names against the bank customer names, the application uses information learned from previous transformation scripts to identify and standardize the join keys appropriately. 
+% While the data wrangling application could have made some of these suggestions based on intrinsic properties of the data being transformed, it benefited substantially from peripheral context on other datasets and scripts. 
+% : reference data like geographic distributions of branches, repositories of data science routines, and the analytic context that the datasets being wrangled came from the data lake with security annotations. \emph{Would be nicer to get an analytic context about Janet's behavior.}
 
-Armed with a tidy table of hundreds of columns joined together, Janet opens her chosen BI charting application. She plans to cube the data set along various features of users and social media behavior, assessing churn rates in different categories. Given the richness of her wrangled table, the resulting number of potential charts is enormous. Fortunately her BI tool has automated features to recommend charts of interest, and focuses on breaking down the data hierarchically along time, space, and the extracted sentiment scores and bank-specific entity features; it omits customer names and the attributes marked confidential.  Here again the BI tool benefits from broad context: it sees the lineage from the data wrangling application and knows what features were results of complex computations; it also sees the confidentiality markings from the catalog application two steps upstream.
+Armed with a tidy table of hundreds of columns joined together, Janet opens her chosen BI charting application. She plans to cube the data set along various features of users and social media behavior, assessing churn rates in different categories. Given the richness of her wrangled table, the resulting number of potential charts is enormous. Fortunately her BI tool has automated features to recommend charts of interest. Using training data from many other analysts stored in the context service, the recommender focuses on breaking down the data on the custom, algorithmically-extracted sentiment scores and bank-specific entity features, as well as time and space; it omits customer names and the attributes marked confidential.  Janet notices a subcategory of posts with hate speech, and the BI tool enables her to highlight that category and store annotations on the related customers in the context service.
+% Here again the BI tool benefits from broad context: lineage from the data wrangling application identifying algorithmic results, metadata on masking from the catalog tool, and training data on chart selection.
 % ; these tools use intrinsic properties of their input data today~\cite{jeffheer}. To work better, they could benefit from the lineage of transformations that created their input---in our case recognizing the presence of social media data at the source, and recommending charts that were chosen for visualizing other outputs of social media datasets.
 %If interesting patterns emerge in the data visualizations, the analyst may recommend decisions to the organization: e.g. to deploy customer service representatives to respond on social media, or to have the data science team incorporate social media feeds into more sophisticated predictive models for churn.
 
+All of these tools use data context to provide Janet with assistance. Some features save her time on the task she is directly attempting; others provide her contextual information outside her core task---algorithmic ``tribal wisdom''. While some of these features can be provided by current applications that save and learn from their own metadata, all of them benefit substantially from a broader context that goes across applications. Note the ad-hoc, cyclic dependencies in this ``pipeline'': the catalog tool depends on the schemas and sketches generated by users wrangling data (schema-on-use!), the wrangling tool depends on the catalog tool, the BI tool benefits from the lineage of wrangling scripts and populates annotations that can be surfaced back in the catalog.
 
 % \emph{A number of new applications for data analysts have begun to capture data context and provide assistive intelligence as described above, but they currently have no way to share that information.  Hence the scope of their context is limited to what they see at their inputs. Broadly-adopted data context services are key to expanding the intelligence of these applications, harnessing data and computation to improve analyst productivity.}
 
 
-\emph{\textbf{Idea 2: Model training and serving.  Joey to fill in?} 
+\emph{\textbf{Idea 2: Model training and serving.  Joey to fill in? Or borrow a scenario from Johann's paper.} 
 % The previous example focused on relatively simple exploratory data analysis. 
 Data context can bring similar benefits to the kinds of predictive services that hardcore data scientists build and deploy live in modern hosted applications.  Large-scale predictive services like recommender systems and driving instructions rely on data scientists and engineers working in agile development cycles.  The services are based on serving results from models; the models themselves are periodically trained off of features extracted from data. Data and features evolve over time. Meanwhile, there should be a virtuous cycle of model training, serving and experimentation.  Want to improve this cycle. Want to be able to run new models on old traces (cite Johann's paper). Want to incorporate new models in debug mode in production. Want to be able to reward staff for improving models. Want to reallocate staff when the benefit of experimenting with the model no longer justifies the effort.}
 
 \emph{\textbf{Idea 3: A Pragmatic example in existing Hadoop workflows.  LinkedIn or Navigator customer story?}  Maybe take Idea 1 and make it less about assistive features, more about lost lineage across HDFS, Trifacta, Hive and Tableau?}
 
 \subsection{Design Requirements}
-Three key design requirements for Ground arise naturally blah blah... KEY: MAKE A SIMPLE DECISIONS TODAY 
-THAT GUARANTEES YOU CAN MAKE A WIDE RANGE OF DECISIONS AND INNOVATIONS TOMORROW.
-
 \emph{Joey: we should have a set of requirements here. List them, Justify them, Argue that they are not well-solved by other solutions.  Also make them interesting.}
 
-\smallitem{Model-Agnostic.} In most Big Data stacks, data arrives in many formats and data models, and is transformed into many others using a variety of tools and languages. For a data context service to be broadly adopted, it cannot impose its own opinions on how data is modeled. As a corollary, it cannot be prescriptive about how metadata is modeled. A key challenge in Ground is to design a core metamodel that easily captures both generic information that applies to all data context, and specific forms of information that exist in different data models, applications, and usage.  \emph{Reduce friction. Enable agile evolution over time.}
+In a decoupled architecture of multiple applications and multiple backend services, context can serves as a ``narrow waist'': a single point of access for the basic information about data and its usage. However, data context is an emerging feature of the big data stack, and its use remains open-ended. Hence we were keen to focus on simple decisions today that could enable the success of more complex decisions made later by other services and applications. To this end we were guided by Postel's Law from Internet architecture: ``Be conservative in what you do, be liberal in what you accept from others''.  With this theme in hand, we identified four key design requirements for a successful Context Service.
 
-\smallitem{Immutable.} Context goes across time, bro.  This is interesting!
+\smallitem{Model-Agnostic.} Data models evolve over time, and essentially never die: modern organizations have to manage everything from COBOL data layouts to RDBMS dumps to XML, JSON, Apache logs and free text. For a data context service to be broadly adopted, it cannot impose opinions on how data should be modeled. As a corollary, it cannot be prescriptive about how metadata is modeled---each dataset may have different metadata to manage. This is a significant weakness in the most widely-used sources of metadata in this space today: the Hive Metastore only stores relational schemas, and HDFS only surfaces basic file metadata.  A key challenge in Ground is to design a core metamodel that captures the generic information that applies to all data, and specific forms of information that exist in different data models, applications, and usage. We explore this issue in Section~\ref{sec:metamodel}.
 
-\smallitem{Scalable.}  This is a function of the storage beneath, to a large extent. But still, the API dispatch, consistency model, and other aspects of the specification should not preclude the management of enormous volumes of metadata.
+\smallitem{Immutable.} ``Updating'' context information in place amounts to erasing the past; a poor choice for many reasons. The latest context may not always be the most relevant: we may want to replay scenarios from the past for what-if analysis, or study  context information like success rates of a predictive algorithm over time. Prior context may also be important for governance and veracity purposes: we may be asked to audit historical behavior on old data, or reproduce experimental results published in the past. For flexibility and accuracy, the best solution is to keep all versions of all information ever stored in the context service. This is a simplifying assumption from a record-keeping perspective, but of course it raises significant engineering challenges that we discuss later.  Mature storage solutions in the Big Data ecosystem do not support immutability and versioning natively; using these legacy systems requires immutability features be layered on top. We explore this issue in Section~\ref{sec:storage}.
 
-\smallitem{Politically Neutral.}  While not a technical design requirement per se, we note that metadata services have to be Switzerland to be successful.  The goal is for customers to adopt them without fear of lock-in, and applications to work with them without fear of being ghettoized. Vendor-centric solutions in this space have traditionally raised concerns on those fronts; this is perhaps why the MDM vendors have not been successful in the market. Open source is not a panacea; customers have to believe that the code committers and project leaders do not have financial or political incentives to behave against their interests.  
+\smallitem{Scalable.} There is a traditional misconception that metadata is small data. Even in prior generations of ETL technology, metadata can become extremely large~\cite{informaticascale}. In many Big Data settings, it is reasonable to envision the data context being far larger than the data itself. One reason for this is the need to support usage information: the logs from a data service can often outstrip the live data managed by the service. Another is the aforementioned desire for immutability: the version history of data can be substantial. Finally, data lineage can also grow to be extremely large, depending on the desired analyses to be run in future~\cite{lineagesurvey}.  Of course it is possible to argue that these various forms of context information like logs should be managed as ``real data''.  We will have more to say on this in Section~\ref{sec:whatismetadata}; our main point here is that the uses of a context service will encompass analyses and lookups over that information.  We explore this in Section~\ref{sec:storage} as well.
+
+\smallitem{Politically Neutral.}  While not a technical design requirement per se, we note that any narrow waist service like data context had to ``be Switzerland to be successful''.  Customers will only adopt a central data context service if they feel no fear of lock-in; application writers will prefer to write to widely-used APIs to maximize the benefit of their efforts. Vendor-centric metadata and governance solutions in this space have traditionally raised concerns on those fronts; this is perhaps one reason why the traditional Master Data Management vendors have not been successful in the Big Data market. It is important to note that \emph{open source is not equivalent to political neutrality}; customers and developers have to believe that the project leadership has strong incentives to behave in the common interest. We return to this point in Section~\ref{sec:discussion}.
 
 \vspace{1em}
-These are all opportunities to go beyond solving the current crisis, providing for a better future.  
+\emph{Closing remark here on how these issues make things very interesting indeed!}
 
 \section{Architecture of Ground}
-\begin{figure}
+\label{sec:arch}
+\begin{figure*}[th]
 \center
 \includegraphics[width=0.7\linewidth]{groundarch.pdf}
-\end{figure}
+\end{figure*}
 
 \subsection{Common Ground: A Metamodel}
+\label{sec:metamodel}
 \subsection{Underground Services}
 
-\section{Prototype Evaluation}
+\section{Storage: A Prototype Evaluation}
+\label{sec:storage}
 Functionality and Performance/Scale.
 
 Functionality: well, we've started building out a few things and they went well.  Apiary and Grit.
 
 What about performance? Here we ran into some bottlenecks with the widely-used storage systems in the field.  This merits more attention.
 
+\subsection{Initial Results}
+\label{sec:perf}
 \section{Challenges for the community}
+\bibliography{ground}
 \end{document}
