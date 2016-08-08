@@ -3,12 +3,17 @@
 \usepackage{times}
 \usepackage{gensymb}
 \usepackage{epsfig}
+\usepackage{xcolor}
 
 \begin{document}
 \conferenceinfo{CIDR '17}{January 8-11, 2017, Santa Cruz, CA, USA}
 \newcommand{\smallitem}[1]{\vspace{1em}\noindent\textbf{#1}}
 \newcommand{\smallitembot}{\vspace{1em}\noindent}
 \bibliographystyle{abbrv}
+
+\newcommand{\jmh}[1]{{\textcolor{red}{[[#1 -- jmh]]}}}
+% \newcommand{\jmh}[1]{}
+
 
 
 \title{Grounding Big Data with Data Context Services}
@@ -62,7 +67,7 @@ The goal of Ground is to serve as a central model, API and repository for captur
 \subsection{Scenarios}
 To illustrate the benefits of data context, consider the following scenario. It is only modestly futuristic: there are applications that do some of these things today, but could do far more if they had broader context.
 
-\textbf{Idea 1: Intelligent Business Intelligence.}  Janet, an analyst at a major bank, believes that customers' social network behavior can help explain their likelihood of closing their account (churning). Evaluating this hypothesis requires a pipeline of stages: data acquisition, transformation and analysis. 
+\jmh{\textbf{Idea 1: Intelligent Business Intelligence.}}  Janet, an analyst at a major bank, believes that customers' social network behavior can help explain their likelihood of closing their account (churning). Evaluating this hypothesis requires a pipeline of stages: data acquisition, transformation and analysis. 
 % Intelligent applications are emerging for each of these tasks today, which make suggestions to users. All could benefit from a more comprehensive service for data context, as we illustrate below.
 
 Janet 
@@ -86,27 +91,29 @@ All of these tools use data context to provide Janet with assistance. Some featu
 % \emph{A number of new applications for data analysts have begun to capture data context and provide assistive intelligence as described above, but they currently have no way to share that information.  Hence the scope of their context is limited to what they see at their inputs. Broadly-adopted data context services are key to expanding the intelligence of these applications, harnessing data and computation to improve analyst productivity.}
 
 
-\emph{\textbf{Idea 2: Model training and serving.  Joey to fill in? Or borrow a scenario from Johann's paper.} 
+\jmh{\textbf{Idea 2: Model training and serving.  Joey to fill in? Or borrow a scenario from Johann's paper.} 
 % The previous example focused on relatively simple exploratory data analysis. 
 Data context can bring similar benefits to the kinds of predictive services that hardcore data scientists build and deploy live in modern hosted applications.  Large-scale predictive services like recommender systems and driving instructions rely on data scientists and engineers working in agile development cycles.  The services are based on serving results from models; the models themselves are periodically trained off of features extracted from data. Data and features evolve over time. Meanwhile, there should be a virtuous cycle of model training, serving and experimentation.  Want to improve this cycle. Want to be able to run new models on old traces (cite Johann's paper). Want to incorporate new models in debug mode in production. Want to be able to reward staff for improving models. Want to reallocate staff when the benefit of experimenting with the model no longer justifies the effort.}
 
-\emph{\textbf{Idea 3: A Pragmatic example in existing Hadoop workflows.  LinkedIn or Navigator customer story?}  Maybe take Idea 1 and make it less about assistive features, more about lost lineage across HDFS, Trifacta, Hive and Tableau?}
+\jmh{\textbf{Idea 3: A Pragmatic example in existing Hadoop workflows.  LinkedIn or Navigator customer story?}  Maybe take Idea 1 and make it less about assistive features, more about lost lineage across HDFS, Trifacta, Hive and Tableau?}
 
 \subsection{Design Requirements}
-\emph{Joey: we should have a set of requirements here. List them, Justify them, Argue that they are not well-solved by other solutions.  Also make them interesting.}
+In a decoupled architecture of multiple applications and backend services, context serves as a ``narrow waist'': a single point of access for the basic information about data and its usage. However, the use of data context remains an open-ended design opportunity. Hence we were keen to focus on simple decisions today that could enable the success of new services and applications in future. To this end we were guided by Postel's Law from Internet architecture: ``Be conservative in what you do, be liberal in what you accept from others''.  With this theme in hand, we identified four key design requirements for a successful data context service.
 
-In a decoupled architecture of multiple applications and multiple backend services, context can serves as a ``narrow waist'': a single point of access for the basic information about data and its usage. However, data context is an emerging feature of the big data stack, and its use remains open-ended. Hence we were keen to focus on simple decisions today that could enable the success of more complex decisions made later by other services and applications. To this end we were guided by Postel's Law from Internet architecture: ``Be conservative in what you do, be liberal in what you accept from others''.  With this theme in hand, we identified four key design requirements for a successful Context Service.
+\smallitem{Model-Agnostic.} For a data context service to be broadly adopted, it cannot impose opinions on metadata modeling. Data models evolve over time, and essentially never die: modern organizations have to manage everything from COBOL data layouts to RDBMS dumps to XML, JSON, Apache logs and free text. As a result, the context service cannot prescribe how metadata is modeled---each dataset may have different metadata to manage. This is a significant weakness in the Big Data stack today: the Hive Metastore captures fixed features or relational schemas; HDFS captures fixed features of files.  A key challenge in Ground is to design a core metamodel that captures generic information that applies to all data, as well as custom information for different data models, applications, and usage. We explore this issue in Section~\ref{sec:metamodel}.
 
-\smallitem{Model-Agnostic.} Data models evolve over time, and essentially never die: modern organizations have to manage everything from COBOL data layouts to RDBMS dumps to XML, JSON, Apache logs and free text. For a data context service to be broadly adopted, it cannot impose opinions on how data should be modeled. As a corollary, it cannot be prescriptive about how metadata is modeled---each dataset may have different metadata to manage. This is a significant weakness in the most widely-used sources of metadata in this space today: the Hive Metastore only stores relational schemas, and HDFS only surfaces basic file metadata.  A key challenge in Ground is to design a core metamodel that captures the generic information that applies to all data, and specific forms of information that exist in different data models, applications, and usage. We explore this issue in Section~\ref{sec:metamodel}.
+\smallitem{Immutable.} Data context must be immutable; ``updating'' stored context is tantamount to erasing history. Indeed, Postel's Law essentially dictates that we never discard information, lest somebody ask for it. There are multiple reasons why history is critical. The latest context may not always be the most relevant: we may want to replay scenarios from the past for what-if analysis or debugging, or study how context information (say, success rates of a statistical model) change over time. Prior context may also be important for governance and veracity purposes: we may be asked to audit historical behavior and metadata, or reproduce experimental results published in the past. This simplifies record-keeping, but of course it raises significant engineering challenges.  Mature storage solutions in the Big Data ecosystem do not support immutability and versioning natively. We explore this issue in Section~\ref{sec:storage}.
 
-\smallitem{Immutable.} ``Updating'' context information in place amounts to erasing the past; a poor choice for many reasons. The latest context may not always be the most relevant: we may want to replay scenarios from the past for what-if analysis, or study  context information like success rates of a predictive algorithm over time. Prior context may also be important for governance and veracity purposes: we may be asked to audit historical behavior on old data, or reproduce experimental results published in the past. For flexibility and accuracy, the best solution is to keep all versions of all information ever stored in the context service. This is a simplifying assumption from a record-keeping perspective, but of course it raises significant engineering challenges that we discuss later.  Mature storage solutions in the Big Data ecosystem do not support immutability and versioning natively; using these legacy systems requires immutability features be layered on top. We explore this issue in Section~\ref{sec:storage}.
+\smallitem{Scalable.} It is a frequent misconception that metadata is small. In fact, metadata scaling was already a challenge in previous-generation technology. In many Big Data settings, it is reasonable to envision the data context being far larger than the data itself. Usage information is one culprit: the logs from a data service can often outstrip the live data managed by the service. Another is the aforementioned desire for immutability: version history can be substantial. Finally, data lineage can also grow to be extremely large
+%, depending on the kind of lineage desired
+~\cite{cheney2009provenance}.  Of course it is possible to argue that various forms of context information should be managed as ``real data''.  Our main point here is that the use of a context service will encompass analyses and lookups over that information.  We explore these issues in Section~\ref{sec:storage} as well.
 
-\smallitem{Scalable.} There is a traditional misconception that metadata is small data. Even in prior generations of ETL technology, metadata can become extremely large~\cite{informaticascale}. In many Big Data settings, it is reasonable to envision the data context being far larger than the data itself. One reason for this is the need to support usage information: the logs from a data service can often outstrip the live data managed by the service. Another is the aforementioned desire for immutability: the version history of data can be substantial. Finally, data lineage can also grow to be extremely large, depending on the desired analyses to be run in future~\cite{lineagesurvey}.  Of course it is possible to argue that these various forms of context information like logs should be managed as ``real data''.  We will have more to say on this in Section~\ref{sec:whatismetadata}; our main point here is that the uses of a context service will encompass analyses and lookups over that information.  We explore this in Section~\ref{sec:storage} as well.
-
-\smallitem{Politically Neutral.}  While not a technical design requirement per se, we note that any narrow waist service like data context had to ``be Switzerland to be successful''.  Customers will only adopt a central data context service if they feel no fear of lock-in; application writers will prefer to write to widely-used APIs to maximize the benefit of their efforts. Vendor-centric metadata and governance solutions in this space have traditionally raised concerns on those fronts; this is perhaps one reason why the traditional Master Data Management vendors have not been successful in the Big Data market. It is important to note that \emph{open source is not equivalent to political neutrality}; customers and developers have to believe that the project leadership has strong incentives to behave in the common interest. We return to this point in Section~\ref{sec:discussion}.
+\smallitem{Politically Neutral.}  While not a design requirement per se, we note that any narrow-waist service like data context has to ``be Switzerland to be successful''.  Customers will only adopt a central data context service if they feel no fear of lock-in; application writers will prioritize support for widely-used APIs to maximize the benefit of their efforts. 
+% Vendor-centric metadata and governance solutions in this space have traditionally raised concerns on those fronts; this is perhaps one reason why the traditional Master Data Management vendors have not been successful in the Big Data market. 
+It is important to note here that \emph{open source is not equivalent to political neutrality}; customers and developers have to believe that the project leadership has strong incentives to behave in the common interest. We return to this point in Section~\ref{sec:discussion}.
 
 \vspace{1em}
-\emph{Closing remark here on how these issues make things very interesting indeed!}
+\jmh{Closing remark here on how these issues make things very interesting indeed!}
 
 \section{Architecture of Ground}
 \label{sec:arch}
@@ -121,7 +128,27 @@ In a decoupled architecture of multiple applications and multiple backend servic
 
 \section{Storage: A Prototype Evaluation}
 \label{sec:storage}
-Functionality and Performance/Scale.
+Scenarios:
+\begin{itemize}
+\item Relational: Apiary
+\item Code: Grit
+\item Logs: Grunk
+\end{itemize}
+
+Functionality:
+\begin{itemize}
+\item transitive closure
+\item point lookup
+\item sessionization and trends?
+\end{itemize}
+
+Performance/Scale.
+
+\section{Discussion}
+\label{sec:discussion}
+\jmh{This may evolve into Research Opportunities or Future Work, but this is a placeholder for things that were postponed in earlier text}
+
+\jmh{Backref to Scalability discussion above, and the question ``are logs data or metadata''?}
 
 Functionality: well, we've started building out a few things and they went well.  Apiary and Grit.
 
