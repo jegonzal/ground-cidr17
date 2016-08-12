@@ -4,6 +4,9 @@
 \usepackage{gensymb}
 \usepackage{epsfig}
 \usepackage{xcolor}
+\usepackage{xspace}
+\usepackage{multicol}
+\usepackage{listings}
 
 \begin{document}
 \conferenceinfo{CIDR '17}{January 8-11, 2017, Santa Cruz, CA, USA}
@@ -15,6 +18,32 @@
 \newcommand{\vikram}[1]{{\textcolor{blue}{[[#1 --vikram]]}}}
 % \newcommand{\jmh}[1]{}
 
+\newcommand{\vml}{VML\xspace}
+\newcommand{\core}{bedrock\xspace}
+\newcommand{\mantle}{central\xspace}
+\newcommand{\crust}{top\xspace}
+\newcommand{\Core}{Bedrock\xspace}
+\newcommand{\Mantle}{Central\xspace}
+\newcommand{\Crust}{Top\xspace}
+
+\newcommand{\version}{\texttt{Version}\xspace}
+\newcommand{\richversion}{\texttt{RichVersion}\xspace}
+\newcommand{\thing}{\texttt{Thing}\xspace}
+\newcommand{\node}{\texttt{Node}\xspace}
+\newcommand{\edge}{\texttt{Edge}\xspace}
+\newcommand{\structure}{\texttt{Structure}\xspace}
+\newcommand{\graph}{\texttt{Graph}\xspace}
+\newcommand{\TVID}{\texttt{TVID}\xspace}
+\newcommand{\gtag}{\texttt{Tag}\xspace}
+\newcommand{\uri}{\texttt{URI}\xspace}
+
+\newcommand{\versiongraph}{version graph\xspace}
+\newcommand{\modelgraph}{model graph\xspace}
+\newcommand{\lineagegraph}{lineage graph\xspace}
+\newcommand{\versiongraphs}{version graphs\xspace}
+\newcommand{\modelgraphs}{model graphs\xspace}
+\newcommand{\lineagegraphs}{lineage graphs\xspace}
+\newcommand{\groundwire}{GroundWire\xspace}
 
 
 \title{Grounding Big Data with Data Context Services}
@@ -66,6 +95,7 @@ We are building an open-source data context service we call \emph{Ground}---a fo
 The goal of Ground is to serve as a central model, API and repository for capturing the broad context in which data gets used. In designing Ground, our intent is to address practical problems for the Big Data community in the short term, and open up opportunities for research and innovation as well.
 
 \subsection{Scenarios}
+\label{sec:scenarios}
 To illustrate the benefits of data context, consider the following scenario. It is only modestly futuristic: there are applications that do some of these things today, but could do far more if they had access to broader context.
 
 \jmh{\textbf{Idea 1: Intelligent Business Intelligence.}}  Janet, an analyst at a major bank, believes that customers' social network behavior can help explain their likelihood of closing their account (churning). Evaluating this hypothesis requires a pipeline of stages: data acquisition, transformation and analysis. 
@@ -99,7 +129,7 @@ Data context can bring similar benefits to the kinds of predictive services that
 \jmh{\textbf{Idea 3: A Pragmatic example in existing Hadoop workflows.  LinkedIn or Navigator customer story?}  Maybe take Idea 1 and make it less about assistive features, more about lost lineage across HDFS, Trifacta, Hive and Tableau?}
 
 \subsection{Design Requirements}
-In a decoupled architecture of multiple applications and backend services, context serves as a ``narrow waist'': a single point of access for the basic information about data and its usage. However, the use of data context remains an open-ended design opportunity. Hence we were keen to focus on simple decisions today that could enable the success of new services and applications in future. To this end we were guided by Postel's Law from Internet architecture: ``Be conservative in what you do, be liberal in what you accept from others''.  With this theme in hand, we identified four key design requirements for a successful data context service.
+In a decoupled architecture of multiple applications and backend services, context serves as a ``narrow waist'': a single point of access for the basic information about data and its usage. However, the use of data context remains an open-ended design opportunity. Hence we were keen to focus on simple decisions today that could enable the success of new services and applications in future. To this end we were guided by Postel's Law of Robustness from Internet architecture: ``Be conservative in what you do, be liberal in what you accept from others''.  With this theme in hand, we identified four key design requirements for a successful data context service.
 
 \smallitem{Model-Agnostic.} For a data context service to be broadly adopted, it cannot impose opinions on metadata modeling. Data models evolve over time, and essentially never die: modern organizations have to manage everything from COBOL data layouts to RDBMS dumps to XML, JSON, Apache logs and free text. As a result, the context service cannot prescribe how metadata is modeled---each dataset may have different metadata to manage. This is a significant weakness in the Big Data stack today: the Hive Metastore captures fixed features or relational schemas; HDFS captures fixed features of files.  A key challenge in Ground is to design a core metamodel that captures generic information that applies to all data, as well as custom information for different data models, applications, and usage. We explore this issue in Section~\ref{sec:metamodel}.
 
@@ -118,52 +148,333 @@ It is important to note here that \emph{open source is not equivalent to politic
 
 \section{Architecture of Ground}
 \label{sec:arch}
-Ground is composed of a foundational metamodel and the sub-services that back it up.  The metamodel and its Northbound API are critical: they define the Ground surface and semantics, reflecting the new data practices we wish to capture and enhance.  Metamodel definition and support represents the first code we are writing for Ground, and we expect to continue to maintain and evolve it over time.  Behind the metamodel is the Southbound API to five basic services described below.  
-
-We are currently in the midst of an agile development cycle, building and releasing a Minimum Viable Prototype (MVP) of Ground that we call \emph{Ground Zero}. Where appropriate we describe our goals and status for the MVP separately from the longer-term discussion.  A sketch of the Ground Zero architecture is provided in Figure~\ref{fig:layers}.
-
-\begin{figure*}[th]
-\centering
-\includegraphics[width=0.75\linewidth]{groundarch.pdf}
-\caption{A sketch of the Ground architecture.}
-\label{fig:layers}
-\end{figure*}
-
-\subsection{The Common Ground Metamodel, In Brief}
+The Ground architecture is characterized by a foundational metamodel called \emph{Common Ground}, and two APIs.  The \emph{Underground} API captures the underlying services that Ground relies upon to function; these are swappable to enable the use of common open source components today, and the option for improved services in future. The \emph{Aboveground} API is the interface that Ground provides to applications.
+A sketch of the Ground Zero architecture is provided in Figure~\ref{fig:layers}.
 
 
-We begin with an overview of our metamodel, \emph{Common Ground}.
-% , which is described in detail in a companion document~\cite{commonground}; we provide an overview here.  
-Common Ground provides a three-layer metamodel, with three intertwined graphs capturing versioning at the \emph{core} of the model, metadata modeling at the intermediate \emph{mantle} level, and usage information at the outer \emph{crust} layer.  The core versioning model supports arbitrary DAGs of versions that can be managed in Ground, or be shadowed from external versioning systems like Git. All metadata in Ground is intrinsically versioned. The mantle modeling layer offers an inclusive graph representation that can capture metadata that is represented in both structured and unstructured forms side-by-side, subsuming standard models like Relational, JSON documents, key-value stores and XML.  Usage logs, principals and lineage DAGs in the crust are the third key aspect of the metamodel, enabling the tracking of lineage across both nodes and edges in the underlying models.  
-% The interested reader is referred to the Common Ground design document~\cite{commonground} for more detail.
+\subsection{The Common Ground Metamodel}
+\jmh{Pull in the practical motivation for each layer from the GDocs outline.}
+Common Ground is a metamodel designed to be general and unopinionated, yet provide enough structure to capture  critical universal aspects of context metadata.  It is based on an interleaved, three-layer graph structure we call a \emph{Version-Model-Lineage (\vml) graph}.  In the spirit of robustness, the central construct is simple and flexible: a \modelgraph $M$ of nodes and edges for describing data, flexible enough to admit a diversity of traditional data models.
+% (relational, entity/relationship, hierarchical, network, semi-structured, linked, etc.) 
+Underneath that metadata graph is a \versiongraph $V$, which can track a variety of models 
+of revision history for individual objects and collections. Above the metadata graph is a 
+\lineagegraph $L$ used to capture the lineage of how pieces of data are derived.
 
-A prototype implementation of Common Ground has been implemented in Scala and is in active use in a deployment at UC Berkeley managing metadata for a large undergraduate course on Database Systems with 500 students and 10 staff. It is tracking metadata about user identity across three authorization systems at Berkeley, workflows and scripts in Python, SQL, PySpark and Jupyter Notebooks, and code versioned externally at GitHub.  This prototype of the metamodel forms the initial basis of the Ground Zero MVP, and has driven the prototypes of some of the services described next.
+%%%%%%%%%%%
+
+\subsubsection{\Core: Version Graphs}
+% \begin{figure}[ht]
+% \begin{scriptsize}
+% \begin{multicols}{2}
+% % \lstinputlisting{scala/core.scala.txt}
+% \end{multicols}
+% \end{scriptsize}
+% \caption{\Core metamodel in Scala.}
+% \label{fig:core}
+% \end{figure}
+
+The \core layer of Common Ground bootstraps the representation of all information in the Ground metadata service, by providing immutable objects called {\thing}s, whose evolution is captured by {\version} objects linked into a \emph{\versiongraph} abstraction. 
+
+Versioning forms the \core of Common Ground for two reasons.  First, we believe that \jmh{Pull Quote!} context services are required to support complete history. Metadata is long-lived, and key to understanding the evolving history of data---e.g., for auditing, reproducibility, and debugging. Moreover, given the shrinking costs of storage and the increasing value of understanding data, metadata history is a good investment.
+% \footnote{Ground's design does not preclude the possiblity of truncating version history as a matter of system management, e.g., if storage is limited or policy dictates that certain metadata be retired.}.
+Second, versioning belongs at the lowest layer semantically: version graphs themselves are the only metadata that is not versioned.
+
+% Scala traits for the \core are shown in Figure~\ref{fig:core}.  
+In Ground, a \version is simply a globally unique identifier representing an immutable version of an object.
+\texttt{VersionSuccessor} relationships connect parent and child \version IDs.
+\texttt{VersionHistoryDAG}s capture the \versiongraph model, consisting of a root \version $R$ 
+and a set of \texttt{VersionSuccessor}s that form a DAG rooted at $R$ 
+representing branches and merges.
+%(i.e., R transitively points to all other items). 
+Type parameterization ensures that all of the \texttt{VersionSuccessor}s in a given DAG link the same subclass of {\version}s together.
+
+The last element of our \core metamodel is the critical building block for
+the rest of Common Ground: the \thing. A
+\thing is an object that captures its own version history: it has a
+unique ID and a \texttt{VersionHistoryDAG}. A \thing is parameterized on the subclass of
+\version that it contains in its \texttt{VersionHistoryDAG}.  
+% As we will see in the next section, most of the metamodel will use {\thing}s to capture the immutable aspects of an object, and the associated {\version}s to capture changes 
+% to the object.
+
+% \jmh{Do we want an equivalent of \tag for \thing?}
+
+The \core is not exposed to Aboveground (user-level) services; it is the root of an inheritance hierarchy that is exposed by the outer layers described below.  
+% From this point on, when we speak of {\thing}s and {\version}s, we will actually be referring to objects in the subclasses defined below that are visible above Ground.
+
+\subsubsection{\Mantle Metamodel: Metadata Graphs}
+
+% \begin{figure}[ht]
+% \begin{scriptsize}
+% \begin{multicols}{2}
+% % \lstinputlisting{scala/mantle.scala.txt}
+% \end{multicols}
+% \end{scriptsize}
+% \caption{\Mantle metamodel in Scala.}
+% \label{fig:mantle}
+% \end{figure}
+
+% Our philosophy is that the metamodel should be designed in layers for
+% simplicity and elegance. \core classes are shared and evolve in infrequent,
+% regimented updates to maximize backwards compatibility. More detailed versions
+% of the metamodel (including versions specific to use cases) are mapped onto
+% simpler versions of the model. Our goal to find a balance between the
+% simplicity and the expressivity of the metamodel and leave the rest up to the
+% application using this metamodel.
+
+% To illustrate this philosophy, we have developed a somewhat richer metamodel
+% that can be imposed onto the aforementioned model.
+
+The \mantle level of Common Ground presents the basic metamodel exposed above Ground: notably {\node}s,{\edge}s and {\graph}s for representing metadata.  
+% All of these objects and collections inherit from \thing, and hence are automatically versioned.   
+% Scala traits for the Mantle are shown in Figure~\ref{fig:mantle}.
+Graphs can represent metadata from a wide variety of 
+semistructured (JSON, XML) and structured (Relational, OO, matrix) data models.
+% typically with strong constraints on the graph shape (e.g. $\mbox{databases} \rightarrow \mbox{tables} \rightarrow \mbox{columns}$). %(Figure~\ref{fig:relational}).  
+In the spirit of ``schema-on-use'', our \mantle metamodel allows diverse metadata to be independently captured, and integrated as needed over time.
+% \begin{figure}[ht]
+% \centering
+% \begin{minipage}{0.4\textwidth}
+% \includegraphics[height=2in]{json.pdf}
+% \caption{A JSON document represented as a graph.  Note the nesting of JSON objects (key-value collections) in a tree shape of oval nodes, and lists as chains of rectangular nodes.}
+% \label{fig:json}
+% \end{minipage}
+% \hspace{0.1\textwidth}
+% \begin{minipage}{0.4\textwidth}
+% \includegraphics[height=2in]{relational.pdf}
+% \caption{A relational database with two schemas, represented as a graph.  Note the fixed schemas$\rightarrow$tables$\rightarrow$columns structure, and
+% the ad hoc foreign key references at the leaves.}
+% \label{fig:relational}
+% \end{minipage}
+% \end{figure}
+
+The basic structure of the \mantle model is defined by pairs of classes \texttt{$C$} and \texttt{$C$Version} (e.g. \node and \texttt{NodeVersion}, etc.)
+These classes inherit from the \core model's \thing and \version classes respectively, imbuing a unique id as well as a \texttt{VersionHistoryDAG} with each instance of $C$.  
+% In turn, all {\version}s in a subclass like
+% \texttt{NodeVersion} are identified by a \texttt{TVID} (Version ID) that stores
+% both the ID of the corresponding \thing , and another \texttt{VersionID}
+% to distinguish the specific \version.  
+% It is thus possible to determine {\thing}s
+% from their {\version}s and vice versa.  
+% \jmh{There is a 1-to-many constraint
+% between {\thing}s and {\version}s.  Worth noting, and asserting somewhere in the
+% code.} \vikram {We agreed that we didn't need actually add anything about this
+% to the document, right?}
+
+To provide customization, the \mantle metamodel supports
+both ad hoc {\gtag} key-value pairs, and fixed {\structure}s containing a prescribed set of {\gtag}s. 
+% {\version}s themselves are
+% immutable, so this information has to be associated upon creation. 
+{\version}s and {\gtag}s are immutable; adding a ``new'' tag to a \thing creates a fresh
+\version. By contrast, {\structure}s have associated \texttt{StructureVersion}s to capture their evolution; {\version}s are (optionally) associated with a specific \texttt{StructureVersion}, not a \structure.
+\jmh{I skipped over RichVersions for simplicity.}
+  % {\tag}s refer to the {\version} that contains them; 
+  %a \tag is uniquely identified by its \version and key.  
+% , a new \version subclass (e.g. \texttt{NodeVersion}) must be generated to hold the new {\tag}s, and linked as a successor into
+% the \texttt{VersionHistoryDAG} of the corresponding \thing\footnote{Logically,
+% the new version would likely contain a copy of all the unmodified {\tag}s
+% of the preceding version as well, though in an implementation this could be
+% encoded more efficiently.}.  
+% We also allow {\tag}s to be associated with {\thing}s, 
+% enabling users to register immutable tags that apply to all versions of a \thing.  \jmh{Need to get 
+% this into the code.}  
+% Structured information is captured via a \structure, akin to a relational table schema or a C struct. (This class is a descendant of \thing, hence contains versions in the form of \texttt{StructureVersion}s.) {\structure}s provide a prescribed metadata format
+% consisting of a set of key-type pairs; each \version that references a given \texttt{StructureVersion} 
+% \emph{must} have {\gtag}s with the corresponding 
+% keys and value types.
+
+% Up to this point we have referred to types rather loosely.  Ground currently includes 
+% a typical set of built-in atomic types common to most languages: booleans, characters, strings, and
+% numerics.  For now most of these types are being taken from Scala; we will evaluate whether additional 
+% atomic types (e.g. SQL's decimal type) need to be built in.  One important type that is specific to 
+% Ground is the Uniform Resource Identifier, or \uri.  We will describe the use of {\uri}s in more detail in the next section.  As of now we have no plans for user-defined types in Ground, though we will revisit
+% this decision as we progress.
+% As noted above, basic {\version}s are simply unique identifiers.
+% We define {\richversion}s, which can be augmented with {\gtag}s and \texttt{StructureVersion}s.  Our main user-facing modeling classes inherit from \richversion to support customization.  In general, the immutable aspects of \mantle model objects are captured in a \thing subclass
+% (e.g. \node), and the mutable aspects in the corresponding \richversion subclass (e.g.
+% \texttt{NodeVersion}).  
+
+
+% These basic objects are quite simple, but they can be customized by attaching
+% ad hoc \texttt{Attributes} to their versions: these are key/value pairs that can
+% be attached to a specific \version. \jmh{Not clear from the Scala how you get attributes of a \thing!}
+% Optionally, {\version}s can also have a \texttt{Structure} that they impose: a set of attributes
+% that they must contain.
+% This more complex
+% metamodel will simply be a composition of the building blocks we highlighted.
+% The \mantle serves as the basis for increasingly rich, use-case specific forms of metadata that can be structured on top of this intermediate
+% metamodel, benefiting both from the versioning embedded in the \core, and
+% the typed graphical structure of the \mantle.
+
+The critical \mantle subclasses are \node and
+\texttt{NodeVersion}, \edge and \texttt{EdgeVersion} and \graph and
+\texttt{GraphVersion}, all defined in a straightforward manner.
+% The \node, \edge and \graph classes contain no more information than the \thing superclass provides; similarly the 
+% \texttt{NodeVersion} class contains no more than \version.
+% %, albeit in a publicly visible interface.
+% % However, both the
+% % \texttt{NodeVersion} and \texttt{EdgeVersion} classes augment their \version
+% % superclass with an optional reference to a \texttt{StructureVersion} (that we
+% % will describe shortly) to represent a required structure for the version.
+% By contrast, \texttt{EdgeVersion}s add two \texttt{NodeVersion} endpoints; \texttt{GraphVersion}s contain a set 
+% of \texttt{EdgeVersion}s.  
+% Like other properties of a \version, that set is immutable.  Hence a new 
+% \texttt{GraphVersion} needs to be generated to capture the \graph being modified by insertion,
+% deletion, or update of an existing \texttt{EdgeVersion}.
+
+  % Working through the definitions of
+% Figure~\ref{mantle} you can see straightforward definitions of \texttt{Set}s
+% and \texttt{SetVersion}s, which inherit from \thing and \version.  The \graph
+% class inherits from \texttt{Set} without modification; the
+% \texttt{GraphVersion} class extends \texttt{SetVersion}.
+
+  % \jmh{For symmetry, we should probably rename \version to Version, and \thing to something else like a Thing.} \jmh{We need a naming convention for these things to avoid the goo of discussing objects and versions in an ad hoc way.}
+
+
+% In the \mantle metamodel, we have a number of objects that each extend the
+% \texttt{VersionedItem}. For each of object (say) ``\texttt{Foo}'', there is a
+% corresponding ``\texttt{FooVersion}''
+% class.
+% These classes extend the \version class and compose the \texttt{VersionHistoryDAG}
+% for the objects that they represent.
+
+% We also have collections of {\node}s and {\edge}s. In order to illustrate the
+% design of these collections, let's consider the example of a \graph, which is
+% represented simply by a set of {\edge}s. A \graph, just like all the other objects
+% in the \mantle, is a \thing. 
+% Versions are more complex for a collection type like {\graph} than for scalar types like \node or \edge.
+% A \graph's version can change in two different ways. The first is simple: when you add or delete an \edge from the \graph, you implicitly create a new
+% version of the \graph container. The
+% second is if the {\edge}s themselves are modified---in particular, when the
+% endpoints of the \edge change, even though the identity of the edge may not\footnote{As a motivating example, consider an ``ownership'' \edge that represents the current owner of a file.  This fact does not change identity, it just links to a different principal as the owner, allowing us to track the ownership of that file over time.}. This second case poses an interesting challenge
+% in terms of correctly propagating versioning changes. In order to solve this
+% problem, every \thing has the capability of being ``watched''. That is,
+% every object has a list of subscribers to which it publishes updates.
+% In Ground, a \graph
+% watches every one of its {\edge}s, and if an \edge is modified, then the \graph
+% will also create a new version of itself with this \edge.  \jmh{This feels imperative.  Instead, how about a declarative description of a constraint: the version of a Graph relates in some way to the most recent version of any Edge it contains.  You could probably leave out the description of how this is achieved
+% entirely.} \vikram{Maybe I'm not understanding what you mean by declarative
+% here, but if you read up until the sentence that ends with "the identity of the
+% edge may not, I think it describes the ways in which the identity of a graph
+% depends on its edges. Beyond that, if we want to leave out a description of how
+% we're accomplishing this, then we can just cut out everything after that,
+% right? Or is there something else missing?}
+
+\paragraph{External Things and Schr\"{o}dinger Versioning}
+Lastly, we need to represent items outside of Ground that should be tracked: canonical examples
+include code in GitHub, or documentation in Google Docs. These objects are represented in Ground by \texttt{ExternalThing}s, with \texttt {ExternalVersion}s that contain a various tags: a \uri reference,  timestamp, optional \texttt{cachedValue}, and parameters for accessing the
+reference (e.g., port, protocol, etc.)
+% \texttt{ExternalThing}s have an \texttt{isUnchanging}
+% flag, which, if enabled, is an indication that the external resource is expected to be
+% immutable, and there should only be one \texttt{ExternalVersion} associated.
+% Note that this is advisory; if the actual reference changes, Ground will not be aware. 
+Ground cannot automatically observe an external item's changes. Hence
+% (i.e., not \texttt{isUnchanging}), 
+API access to the \texttt{URI}
+of a \texttt{ExternalVersion} results in a new \texttt{ExternalVersion} being generated, containing an new
+\texttt{VersionID}, an updated timestamp and possibly an updated cached value. \jmh{pullquote} We refer to this as a \emph{Schr\"{o}dinger} versioning scheme: each time we observe an ExternalThing it changes.
+
+% In summary, the \mantle model provides a public, above-Ground interface for building application-specific 
+% abstractions by customizing the optional and structured tags of nodes and edges, and laying them out in versioned graphs. 
+
+\subsubsection{\Crust Metamodel: Provenance Graphs}
+
+% \begin{figure}[ht]
+% \begin{scriptsize}
+% \begin{multicols}{2}
+% % \lstinputlisting{scala/crust.scala.txt}
+% \end{multicols}
+% \end{scriptsize}
+% \caption{\Crust metamodel in Scala.}
+% \label{fig:crust}
+% \end{figure}
+The goal of the \crust model is to capture usage information composed from the nodes and edges modeled in the mantle.  
+% This usage is captured by \emph{provenance graphs} in the form of
+% \texttt{LineageEdge}s.  To facilitate data lineage, Common Ground depends on
+% a notion of \texttt{Principals} and \texttt{Workflow}s that we define first.  
+% ; we believe they are fundamental
+% to any metadata system as parameters of provenance.
+
+\texttt{Principal}s (a subclass of \thing) represent the actors that work with data:  users, groups, roles, etc. 
+% \texttt{Principal}s are particularly important in data governance
+% because they are central to both auditing and
+% enforcement of policies like access control.
+% Note that \texttt{Principal}s
+% are {\node}s, and built while access rights and group membership can be represented as {\edge}s.
+% {\structure}s would be particularly useful here because users would
+% have some set of required information based on the identity \& authentication
+% schemes being used. 
+\texttt{Workflow}s (a subclass of {\graph}) represent specifications of code invocation.
+\texttt{Principal}s and \texttt{Workflow}s
+are the only ``semantic'' metadata objects prescribed by Common Ground; the rest of the metamodel is 
+ structural and generic.
+Any Data Governance effort requires both of these classes: as examples, they are key to use cases involving
+in-line enforcement, off-line auditing and reproducibility.
+
+% The second common semantic concept is \emph{workflow specification}.
+% This sort of metadata is very important to critical use cases like reproducibility and auditing.
+% Workflows are representable in terms of the graph
+% structure of the \mantle model, but we chose to make them
+% first-class citizens in the \crust of the Ground metamodel. These
+% This is critical to use cases like reproducibility and auditing.
+
+% \texttt{Workflow}s
+% can capture a sequence of \textit{ad hoc}, exploratory actions or a
+% pre-defined sequence of actions. 
+
+In Ground, lineage
+is captured as a relationship between two {\version}s (of two possibly different subclasses), the second of which is derived from the
+first. This relationship is due to some process, either computational
+(workflows) or manual (via some principal). Basic \texttt{EdgeVersion}s as described
+in the \mantle cannot reference other {EdgeVersion}s.  
+So we introduce \texttt{LineageEdge}s, which contain 
+optional references to \texttt{Workflow} and \texttt{Principal} nodes. As is well known in the data provenance literature~\cite{cheney2009provenance}, these lineage edges may be better computed on the fly by analyzing 
+code; \emph{ephemeral} \texttt{LineageEdges} can be used to maintain the Ground lineage API without committing the (redundantly computed) \texttt{LineageEdges} to immutable storage.
+
+\subsubsection{\groundwire: User-Defined Models}
+The three layers of the Ground metamodel are intended to support a wide range of usage.
+However, we expect users of the Ground service to interact with it via a language-agnostic API called \groundwire.  Users can define their own
+customization of the Ground metamodel by declaring custom {\structure}s and {\gtag}s.  
+These can be packaged into libraries for common cases (e.g. a library for representing
+relational database catalogs, or a library for representing JSON documents).  These libraries can 
+be independent of each other, but based in the unified Ground model.  
+
+% The API for \groundwire is the subject of a separate document.
+
+%%%%%%%%%%%
 
 \subsection{Key Services}
-Ground's functionality is backed by five key sub-services.  It was our goal for the initial Ground Zero prototype to use existing open source solutions where possible.  We expect that some of these solutions will fail, and that innovative research will be required to develop viable technology for these services at scale.
+Ground's functionality is backed by five key subservices.  For agility, we are starting the project using existing open source subservices wherever possible.  We anticipate that some of these will not work out, and that new research opportunities will emerge at the systems level.
 
-\begin{enumerate}
-\item \textbf{Versioned Metadata Storage}.  Ground must work with storage in two senses: it must store versioned metadata reliably, and manage references to externally stored data as well.  Ground must be able to store metadata with the full richness of the Common Ground metamodel, including flexible version management, data modeling and lineage storage.  Ground also needs to reference external data, which can come in arbitrary form, with a wide variety of APIs.  Note that Ground is not the primary interface for accessing the data that is referenced by metadata; Ground is expected to \emph{describe} external data and track it, not serve it.  Hence Ground's most basic requirement for external data is to know how to store a unique ID for each item it tracks, and return that ID to applications that request it.  In an ideal setting, each external data item is versioned, hence each version has a unique ID.  However if the external item is mutable and not versioned, Ground generates \emph{Schr\"{o}dinger versions} lazily: each time we observe an object we assume it changes, and assign it a new version (and version ID).  This is discussed in more detail in the Common Ground design~\cite{commonground}.
+\smallitem{Versioned Metadata Storage}.  Ground must be able to efficiently store and retrieve metadata with the full richness of the Common Ground metamodel, including flexible version management, data modeling and lineage storage.  Ground also needs to reference external data, which can come in arbitrary form, with a wide variety of APIs, and handle Schr\"{o}dinger versioning.  The Common Ground metamodel imposes a unique set of requirements that goes beyond the built-in features of typical storage systems. In Section~\ref{sec:perf} we examine a range of candidate open-source systems; as noted there we believe this is an area for significant database research.
 
-\textbf{MVP:} We are currently mapping our metadata model onto a traditional PostgreSQL relational database for storage.  Graphs can be represented as relations, so we manage versions, lineage and data modeling graphs at application level above the relational model.  PostgreSQL is a fairly mature system but is not designed to meet our requirements for latency, scalability and availability. In fact we do not expect any relational solution to work well for our needs over time, as relational databases are not designed for any of the three key individual aspects of the metamodel: versioned data, polyglot data models, or rich lineage.  Unfortunately, we do not expect that solutions in the NoSQL or graph database world will fare well either, though this requires research to validate. Therefore a critical thrust of the Ground research agenda is to understand the weaknesses of existing database systems when faced with these requirements, and design a new database system that is well-suited to emerging metadata workloads. \jmh{Need to call out research hypotheses more clearly.}
+% Note that Ground is not intended as the primary interface for accessing the data that is referenced by metadata; Ground is expected to \emph{describe} external data and track it, not serve it.  Hence Ground's most basic requirement for external data is to know how to store a unique ID for each item it tracks, and return that ID to applications that request it.  In an ideal setting, each external data item is versioned, hence each version has a unique ID.  However if the external item is mutable and not versioned, Ground generates \emph{Schr\"{o}dinger versions} lazily: each time we observe an object we assume it changes, and assign it a new version (and version ID).  
+% This is discussed in more detail in the Common Ground design~\cite{commonground}.
+
+% \textbf{MVP:} We are currently mapping our metadata model onto a traditional PostgreSQL relational database for storage.  Graphs can be represented as relations, so we manage versions, lineage and data modeling graphs at application level above the relational model.  PostgreSQL is a fairly mature system but is not designed to meet our requirements for latency, scalability and availability. In fact we do not expect any relational solution to work well for our needs over time, as relational databases are not designed for any of the three key individual aspects of the metamodel: versioned data, polyglot data models, or rich lineage.  Unfortunately, we do not expect that solutions in the NoSQL or graph database world will fare well either, though this requires research to validate. Therefore a critical thrust of the Ground research agenda is to understand the weaknesses of existing database systems when faced with these requirements, and design a new database system that is well-suited to emerging metadata workloads. \jmh{Need to call out research hypotheses more clearly.}
 
 
-\item \textbf{Search, Query, Analyze}.  As noted above, Ground is intended to be permissive in the kind of metadata it stores.  First, it needs to support a least-common denominator of unstructured tags, and provide efficient search over those tags.  To this end it needs an indexing and search component.  Second, Ground also needs to support efficient interactive behavior for applications that are inserting, updating and fetching metadata---and capture any changes in a versioned manner.  This should be provided by the metadata storage service with low latency and high throughput.  Third, we expect that metadata will produce a rich target for analytical workloads: algorithms that study what data exists over time, as well as who, how and why data gets used and gets changed.  Finally, it seems natural that some workloads will need to combine these three classes of queries, perhaps via a federated query layer above them. 
+\smallitem{Search, Update, Analyze}.  As noted above, Ground is intended to be permissive in the kind of metadata it stores.  First, it needs to support a least-common denominator of unstructured tags, and provide efficient search over those tags.  To this end it needs search-style indexing.
+%; we plan to integrate Solr~\cite{solr} and ElasticSearch~\cite{elasticsearch}.  
+Second, Ground needs to support efficient interactive behavior for applications that are inserting, updating and fetching metadata---capturing changes with versioning. Third, intelligent applications like those in Section~\ref{sec:scenarios} will run significant analytical workloads over metadata---especially usage metadata which could be quite large.  Finally, it seems natural that some workloads will need to combine these three classes of queries, perhaps via a federated query layer above them.  As we explore in Section~\ref{sec:perf}, various open-source solutions can address these workloads at some level, but there is significant opportunity for research here.
 
-\textbf{MVP:} Initially we are not supporting search or analytic APIs; these will be added as the system evolves.  For interactive query, we can only do as well as our prototype relational metadata store.  For search, we expect that existing solutions like Solr will be sufficient for the foreseeable future; we do not expect metadata tagging and querying to exceed volumes that Solr sees in free-text indexing. For analytics, we intend to leverage Spark and GraphX as we have significant expertise in house.  However, the nature of the analytics to be done here represents a major research opportunity: what might be the value of metadata in a Big Data context, and how could that value be extracted by analytics?  Could a \emph{self-aware} Big Data ecosystem improve itself, or provide valuable insight about its usage to applications and users?  \jmh{Again, call out research.}  Finally, the requirements for a federated query layer and its design are a topic for investigation after we acquire a corpus of metadata and workloads.
+% \textbf{MVP:} Initially we are not supporting search or analytic APIs; these will be added as the system evolves.  For interactive query, we can only do as well as our prototype relational metadata store.  For search, we expect that existing solutions like Solr will be sufficient for the foreseeable future; we do not expect metadata tagging and querying to exceed volumes that Solr sees in free-text indexing. For analytics, we intend to leverage Spark and GraphX as we have significant expertise in house.  However, the nature of the analytics to be done here represents a major research opportunity: what might be the value of metadata in a Big Data context, and how could that value be extracted by analytics?  Could a \emph{self-aware} Big Data ecosystem improve itself, or provide valuable insight about its usage to applications and users?  \jmh{Again, call out research.}  Finally, the requirements for a federated query layer and its design are a topic for investigation after we acquire a corpus of metadata and workloads.
 
-\item \textbf{Ingestion: Insertion, Queues and Crawlers}.  Metadata may arrive to be stored in Ground interactively or in batches, and it may come actively (via a ``push'' insertion interface), or passively (via a ``pull'' crawling interface).  Interactive insertion of metadata needs to be supported efficiently by the metadata storage component; batch insertion should make use of queueing services to handle bulk delivery and bursty arrivals.  Passive insertion needs to be handled via a data crawler that can register metadata from external services with Ground, and see if Ground can enrich that metadata via additional software services for file parsing and feature extraction.
+\smallitem{Ingestion: Insertion, Queues and Crawlers}.  Metadata may arrive to be stored in Ground interactively or in batches; it may be pushed in or need to be actively crawled.  
+% Interactive insertion of metadata needs to be supported efficiently by the metadata storage component; batch insertion should make use of queueing services to handle bulk delivery and bursty arrivals.  
+% Passive insertion needs to be handled via a data crawler that can register metadata from external services with Ground, and see if 
+As references to data arrive in Ground, the Belowground ingestion API publishes notifications to Aboveground services like file parsers and feature extractors, which can augment the ``plumbing'' of metadata arrival with custom intelligence in generating metadata.  Subscribing applications Aboveground can fetch the referenced data as it arrives (or later), and enrich the inbound metadata with custom features.  We are currently working with existing open-source solutions for the Underground plumbing: Gobblin for crawling metadata~\cite{gobblin} and Kafka~\cite{kafka} for queueing and pib-sub to the Aboveground API. The Aboveground metadata extraction is of course a large research opportunity spanning database and AI research of various kinds; we hope that commodity APIs for scalable, continuous crawling and ingest of Big Data will drive more work in this area. Similarly, this is a rich area for industrial collaboration: the vendor-neutral aspect of Ground's plumbing should foster a healthy ecosystem for competition at higher levels.
 
-\textbf{MVP:}  Currently we are handling ingest solely via simple push insertion APIs that call into our metadata store via SQL.  However we envision integrating open-source solutions like Kafka for queuing, and Gobblin for crawling and data ingest from remote sources.  We are also eager to explore APIs to plug in third-party solutions for  extracting metadata from crawled data; two examples we are OpenCalais (a free automated service for entity extraction) and Trifacta (a commercial, semi-automatic solution for data transformation).  We also recognize that there are boundless R\&D opportunities here, some of which could be part of Ground, many of which should exist as standalone solutions above Ground.  \jmh{another research opening, though more about opportunities above ground.}  We look forward to integration with other research and non-research colleagues here.
+% \textbf{MVP:}  Currently we are handling ingest solely via simple push insertion APIs that call into our metadata store via SQL.  However we envision integrating open-source solutions like Kafka for queuing, and Gobblin for crawling and data ingest from remote sources.  We are also eager to explore APIs to plug in third-party solutions for  extracting metadata from crawled data; two examples we are OpenCalais (a free automated service for entity extraction) and Trifacta (a commercial, semi-automatic solution for data transformation).  We also recognize that there are boundless R\&D opportunities here, some of which could be part of Ground, many of which should exist as standalone solutions above Ground.  \jmh{another research opening, though more about opportunities above ground.}  We look forward to integration with other research and non-research colleagues here.
 
-\item \textbf{Identity and Authorization Integration}.  Identity management and authorization are a required aspect of the Ground service, but almost certainly one that we want to delegate if we can.  The primary reason not to ``bake in'' authorization is administrative: most organizations already have an authorization service and do not want their metadata service to impose a new one.  More importantly, authorization is a semantic notion with wide flexibility: the authorization policies of a federal defense agency are likely to be wildly different in nature from those of a marketing department doing targeted advertising, or an international consortium of scientists interested in reproducibility.  The flexible design of Ground's metamodel should make it possible for a wide variety of use cases to capture authorization metadata (ownership, auditing, content labeling etc.) and design policy over that metadata.  An open design question is whether Ground needs to \emph{enforce} policy, or merely store it.  Note that there is a subtle set of multidimensional connections between metadata versions and policy versions, particularly when the aurthorization policies of a past time are considered unsafe later---a case where good people may disagree about the virtues of immutability.
+\smallitem{Identity and Authorization Integration}.  Identity management and authorization are a required aspect of the Ground service.  The primary reason not to ``bake this in'' to Ground is administrative: most organizations already have an authorization service that the metadata service must use.  More importantly, authorization is a semantic notion with wide flexibility: the policies of a federal defense agency are likely to be wildly different in nature from those of a corporate marketing department, which in turn differs from a consortium of scientists interested in reproducibility.  The flexible design of Ground's metamodel should support a wide variety of authorization metadata (ownership, auditing, content labeling etc.) and design policy over that metadata.  An open design question is whether Ground needs to \emph{enforce} policy, or merely store it and notify Aboveground applications.  As another open question, note the subtle connections between metadata versions and policy versions, particularly when the authorization policies of a past time are considered unsafe later---what should be done retroactively? This is a case where good people may disagree about the virtues of immutability and reproducibility. More research is required here.
 
-\textbf{MVP:}  The current MVP has no support for identity management and authorization.  However our initial use case has us tracking UC Berkeley student IDs, Github identities, UNIX uids from instructional computing, and associations between the three; visibility of things like grading scripts and their outputs will depend on policies regarding these identities.  In the short term we expect to integrate with Google oAuth services as exposed at UC Berkeley next, and to explore the way that policy is specified and possibly enforced in our prototpype environment.  Our longterm roadmap here remains open; we expect a need to collaborate closely with partners in application domains to get further requirements.  \jmh{Possible tie to Raluca's work here, at minimum as an example of a non-standard approach to these issues.}
+% \textbf{MVP:}  The current MVP has no support for identity management and authorization.  However our initial use case has us tracking UC Berkeley student IDs, Github identities, UNIX uids from instructional computing, and associations between the three; visibility of things like grading scripts and their outputs will depend on policies regarding these identities.  In the short term we expect to integrate with Google oAuth services as exposed at UC Berkeley next, and to explore the way that policy is specified and possibly enforced in our prototpype environment.  Our longterm roadmap here remains open; we expect a need to collaborate closely with partners in application domains to get further requirements.  \jmh{Possible tie to Raluca's work here, at minimum as an example of a non-standard approach to these issues.}
 
-\item \textbf{Scheduling, Workflow, Reproducibility}. In this domain, it is important to separate specification from execution.  We are committed to ensure that Ground is flexible and rich enough to capture the specification of workflows at many granularities of detail: from black-box executables to workflow graphs to source code.  However, we do not expect Ground to be a universal provider of workflow execution or scheduling; instead we hope to integrate with a variety of schedulers and execution frameworks including on-premises and cloud-hosted approaches.
+\smallitem{Scheduling, Workflow, Reproducibility}. We are committed to ensuring that Ground is flexible enough to capture the specification of workflows at many granularities of detail: from black-box executables to workflow graphs to source code.  However, we do not expect Ground to be a universal provider of workflow execution or scheduling; instead we hope to integrate with a variety of schedulers and execution frameworks including on-premises and cloud-hosted approaches. This is currently under design, but the ability to work with multiple schedulers has become fairly common in the open source Big Data stack, so we have examples to follow.
 
-\textbf{MVP:} We plan to begin by utilizing the scheduling and execution services provided by the Gobblin project, which supports a variety of schedulers including Quartz, Azkaban and Oozie, and execution frameworks including Yarn and Helix.  We plan to look into support for VMs and containers as well.  \jmh{Certainly could paint a research picture here, closer to the Bloom-meets-Kubernetes agenda: how will data-centric workflows be programmed in the future, especially as we look at containers, elastic services, etc?}  maybe also a connection to the Shenker/Jackson work on Declarative Datacenters?
-\end{enumerate}
+% \textbf{MVP:} We plan to begin by utilizing the scheduling and execution services provided by the Gobblin project, which supports a variety of schedulers including Quartz, Azkaban and Oozie, and execution frameworks including Yarn and Helix.  We plan to look into support for VMs and containers as well.  \jmh{Certainly could paint a research picture here, closer to the Bloom-meets-Kubernetes agenda: how will data-centric workflows be programmed in the future, especially as we look at containers, elastic services, etc?}  maybe also a connection to the Shenker/Jackson work on Declarative Datacenters?
+
+\smallitembot
 % \begin{figure*}[th]
 % \center
 % \includegraphics[width=0.7\linewidth]{groundarch.pdf}
@@ -204,19 +515,46 @@ Performance/Scale.
 \jmh{This may evolve into Research Opportunities or Future Work, but this is a placeholder for things that were postponed in earlier text}
 
 \jmh{Backref to Scalability discussion above, and the question ``are logs data or metadata''?}
-LinkedIn WhereHows, FINRA Herd, 
 Functionality: well, we've started building out a few things and they went well.  Apiary and Grit.
 
-What about performance? Here we ran into some bottlenecks with the widely-used storage systems in the field.  This merits more attention.
+Performance: Here we ran into some bottlenecks with the widely-used storage systems in the field.  This merits more attention.
 
 \subsection{Initial Results}
 \label{sec:perf}
+
 \section{Challenges for the community}
 \label{sec:challenges}
+\jmh{May not be room for this. Instead find a way to call out the challenges in the body as they occur, with clear formatting.}
+
 \section{Related Work}
 \label{sec:relwork}
-Old-school MDM. Cloudera Navigator, Apache Atlas, LinkedIn WhereHows, FINRA Herd, Google Goods, IBM LabBook. Host of research on graph queries/DBs. Immutable DBs: Postgres, Datomic, Pachyderm.io, Noms. ReproZip and Burrito for capturing lineage.
+\jmh{I think we can give a ``sketch'' for the submission version.}
+Related work comes in a variety of categories, and we give a sketch here; representative citations for each of these categories will be included in the final paper. 
+Historical Master Data Management and ETL designs are ill-suited to modern data context as they were built for schema-on-design data warehousing.  But they provide good examples of data lineage and governance features to enable in a more agile world. Recently, two ``context service''-like systems are under development at Google (Goods) and IBM (labbook), illustrating the potential in this space. \jmh{Need to read papers and call out differentiators and lessons. Goods may be like WhereHows---a specific use case. LabBook might be more close to us.}  
+In the Big Data world, there are two emerging metadata service options that are targeting general-purpose use: Cloudera Navigator and Apache Atlas led by Hortonworks and their customers. Both of these are built on a flexible graph metamodel that inspired the Common Ground \mantle metamodel; neither provides the \core versioning we propose, and neither is perceived as a vendor-neutral option by customers.  These solutions are also exploring ``underground'' alternatives for storage and querying, and there is innovation to be shared among them. Custom metadata stores have been open-sourced by LinkedIn (WhereHows) and FINRA (Herd); both of these are ``opinionated'' rather than general-purpose: specific to use cases in their organizations. They provide a good challenge for Ground, as examples of use cases to be supported. Finally, there is a wide variety of work in both research and industry on isolated, full-stack (smokestack) applications for particular kinds of context usage, including Big Data catalog applications (Alation, Tamr, Waterline), analytic lineage systems (ReproZip, Burrito), information extraction systems (DeepDive, OpenCalais, etc.) and so on. Our hope is for Ground to provide a widely adopted, interoperable subsystem for these applications, freeing them to focus on their own key technical differentiators in adding application-specific intelligence and user experiences.  Finally, there is a host of research on graph queries/DBs, and a much smaller body of work on immutable databases (Postgres, Datomic, Pachyderm.io, Noms); it is quite possible that those solutions could evolve to serve the needs of a context service like Ground.
 \section{Conclusion}
 \label{sec:conclusion}
+\jmh{Fire up the reader ... leave on a note of potential impact and open research opportunity. Maybe two big buckets of future work Belowground and Aboveground if we skip ``Challenges''. In essence those two buckets cover most of database research today!  So this is a playground and dogfood all at once, to mix metaphors badly.}
+
+\begin{figure*}[th]
+\centering
+\includegraphics[width=0.75\linewidth]{groundarch.pdf}
+\caption{A sketch of the Ground architecture.}
+\label{fig:arch}
+\end{figure*}
+
+\begin{figure}[th]
+\centering
+\includegraphics[width=0.75\linewidth]{layers.pdf}
+\caption{The \vml model.  The central layer shows {\node}s (circles) and {\edge}s.  
+Below are corresponding \texttt{NodeVersion}s (small dots) connected by \texttt{EdgeVersion}s.  
+Above is an example of lineage (dark edges) among selected versions.
+% For simplicity, the figure omits \texttt{VersionSuccessor} relationships between different \texttt{LineageEdgeVersion}s at the top, and between \
+% \texttt{EdgeVersion}s in the bottom layer.
+}
+\label{fig:layers}
+\end{figure}
+
+
 \bibliography{ground}
 \end{document}
