@@ -7,6 +7,7 @@
 \usepackage{xspace}
 \usepackage{multicol}
 \usepackage{listings}
+\usepackage{verbatim}
 
 \begin{document}
 \conferenceinfo{CIDR '17}{January 8-11, 2017, Santa Cruz, CA, USA}
@@ -141,6 +142,26 @@ Want to be able to reward staff for improving models.
 Want to reallocate staff when the benefit of experimenting with the model no longer justifies the effort.}
 
 \joey{I am taking a pass on this now (working offline and will push to git).}
+Sue, a data-scientist at a major online social media organization, recently joined their news feed team to develop a more personalized targeting system.
+Before she gets started, Sue examines the code responsible for the news feed and discovers that it pulls content from several different HIVE tables \verb|user_fin| and \verb|ad_posts1| and relies the on the fields \verb|vis_2|, \verb|score3|, and \verb|features_2| when determining how content is ordered. 
+Sue, curious about how these tables are populated, asks her team members who tell her about the intern that created the original cron jobs and warn her to be careful when changing the input tables.
+
+
+
+
+
+
+
+and realizes that the content on the news feed is populated from a single content table which contains articles about each post along with fields determine who 
+
+
+She consults the meta-data system for the web front-end service and sees that the ranking system relies on the content-score field associated with each record.  
+
+
+The current targeting system takes pulls content from advertisers, other users, and media partners which are outputs of multiple other systems at her organization.  
+Each of these pipelines annotates the content with important descriptors which Sue hopes to use in her new pipeline. 
+
+
 
 \jmh{\textbf{Idea 3: A Pragmatic example in existing Hadoop workflows.  LinkedIn or Navigator customer story?}  Maybe take Idea 1 and make it less about assistive features, more about lost lineage across HDFS, Trifacta, Hive and Tableau?}
 
