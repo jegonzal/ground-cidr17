@@ -128,7 +128,17 @@ All of these tools use data context to provide Janet with assistance. Some featu
 
 \jmh{\textbf{Idea 2: Model training and serving.  Joey to fill in? Or borrow a scenario from Johann's paper.} 
 % The previous example focused on relatively simple exploratory data analysis. 
-Data context can bring similar benefits to the kinds of predictive services that hardcore data scientists build and deploy live in modern hosted applications.  Large-scale predictive services like recommender systems and driving instructions rely on data scientists and engineers working in agile development cycles.  The services are based on serving results from models; the models themselves are periodically trained off of features extracted from data. Data and features evolve over time. Meanwhile, there should be a virtuous cycle of model training, serving and experimentation.  Want to improve this cycle. Want to be able to run new models on old traces (cite Johann's paper). Want to incorporate new models in debug mode in production. Want to be able to reward staff for improving models. Want to reallocate staff when the benefit of experimenting with the model no longer justifies the effort.}
+Data context can bring similar benefits to the kinds of predictive services that hardcore data scientists build and deploy live in modern hosted applications.  
+Large-scale predictive services like recommender systems and driving instructions rely on data scientists and engineers working in agile development cycles.  
+The services are based on serving results from models; the models themselves are periodically trained off of features extracted from data. Data and features evolve over time. 
+Meanwhile, there should be a virtuous cycle of model training, serving and experimentation.  
+Want to improve this cycle. 
+Want to be able to run new models on old traces (cite Johann's paper). 
+Want to incorporate new models in debug mode in production. 
+Want to be able to reward staff for improving models. 
+Want to reallocate staff when the benefit of experimenting with the model no longer justifies the effort.}
+
+\joey{I am taking a pass on this now (working offline and will push to git).}
 
 \jmh{\textbf{Idea 3: A Pragmatic example in existing Hadoop workflows.  LinkedIn or Navigator customer story?}  Maybe take Idea 1 and make it less about assistive features, more about lost lineage across HDFS, Trifacta, Hive and Tableau?}
 
