@@ -143,8 +143,17 @@ Want to reallocate staff when the benefit of experimenting with the model no lon
 
 \joey{I am taking a pass on this now (working offline and will push to git).}
 Sue, a data-scientist at a major online social media organization, recently joined their news feed team to develop a more personalized targeting system.
-Before she gets started, Sue examines the code responsible for the news feed and discovers that it pulls content from several different HIVE tables \verb|user_fin| and \verb|ad_posts1| and relies the on the fields \verb|vis_2|, \verb|score3|, and \verb|features_2| when determining how content is ordered. 
-Sue, curious about how these tables are populated, asks her team members who tell her about the intern that created the original cron jobs and warn her to be careful when changing the input tables.
+Sue begins by examining the code responsible for the news feed and discovers that it pulls content from several different HIVE tables \verb|user_fin| and \verb|ad_posts1| and relies the on the fields \verb|vis_2|, \verb|score3|, and \verb|features_2| when determining how content is ordered. 
+Sue, curious about how these tables are populated, asks her team members who tell her about the intern that created the original cron jobs and warn her to be careful when changing the input tables since other teams may depend on those fields.
+% Joey talk about code versions
+Upon examining the cron job, Sue realizes that these tables are constructed by applying a set of scripts that pull from other tables across companies data infrastructure.
+She posts on internal forms and discovers that several of the tables are no longer being updated and realizes that she can improve performance by backfilling these tables.
+However before doing this she also needs to check that the resulting changes do not interfere with any of the other users that currently depend on these tables. 
+
+
+
+
+
 
 
 
