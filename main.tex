@@ -142,33 +142,19 @@ Want to be able to reward staff for improving models.
 Want to reallocate staff when the benefit of experimenting with the model no longer justifies the effort.}
 
 \joey{I am taking a pass on this now (working offline and will push to git).}
-Sue, a data-scientist at a major online social media organization, recently joined their news feed team to develop a more personalized targeting system.
+Sue, a data-scientist at a major online social media organization, recently joined their news team to develop a more personalized targeting system.
 Sue begins by examining the code responsible for the news feed and discovers that it pulls content from several different HIVE tables \verb|user_fin| and \verb|ad_posts1| and relies the on the fields \verb|vis_2|, \verb|score3|, and \verb|features_2| when determining how content is ordered. 
-Sue, curious about how these tables are populated, asks her team members who tell her about the intern that created the original cron jobs and warn her to be careful when changing the input tables since other teams may depend on those fields.
+Sue is curious about the contents and meaning of this data and spends the next few days asking team members and running statistics.
+She discovers that the table is filled by a cron job created by an intern that is no longer with the company and that months of data are missing.
+Her team warns warns her to be careful when changing these tables since other teams may depend on those fields.
 % Joey talk about code versions
-Upon examining the cron job, Sue realizes that these tables are constructed by applying a set of scripts that pull from other tables across companies data infrastructure.
-She posts on internal forms and discovers that several of the tables are no longer being updated and realizes that she can improve performance by backfilling these tables.
-However before doing this she also needs to check that the resulting changes do not interfere with any of the other users that currently depend on these tables. 
+Upon examining the cron job, Sue realizes that these tables are constructed by applying a set of scripts that pull from other tables across the company and several of those tables are no longer being updated.
+She posts on internal forms and in a few days discovers that the contents in the missing tables had been re-factored into standard units and are now exported in a new social network storage system.
+Sue realizes that she can improve performance by simply updating the cron jobs but worries that changes may adversely affect others who depend on the data.  
+Again she posts on forums and waits for responses.
+After a few days without response, Sue pushes an updated version of the cron job and attempts to back fill the the \verb|user_fin| and \verb|ad_posts1| tables.  
 
 
-
-
-
-
-
-
-
-
-
-
-and realizes that the content on the news feed is populated from a single content table which contains articles about each post along with fields determine who 
-
-
-She consults the meta-data system for the web front-end service and sees that the ranking system relies on the content-score field associated with each record.  
-
-
-The current targeting system takes pulls content from advertisers, other users, and media partners which are outputs of multiple other systems at her organization.  
-Each of these pipelines annotates the content with important descriptors which Sue hopes to use in her new pipeline. 
 
 
 
