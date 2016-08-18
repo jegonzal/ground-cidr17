@@ -60,7 +60,8 @@ Groundlings
 \maketitle
 
 \begin{abstract}
-Ground is an open-source data context service, motivated by our experiences in the Big Data ecosystem. By data context, we refer to all the peripheral information that informs the use of data, going well beyond traditional metadata.
+Ground is an open-source data context service, motivated by our experiences in the Big Data ecosystem. 
+By data context, we refer to all the peripheral information that informs the use of data, going well beyond traditional metadata.
 The way we use data has changed both philosophically and practically in the last decade, creating an opportunity for new data context services to foster further innovation in Big Data systems and applications. We provide motivation and design guidelines, present our initial design of a common metamodel and API, and explore the current state of the storage solutions that could serve the needs of a data context service. Throughout, we highlight opportunities for new research and engineering solutions.
 \end{abstract}
 
@@ -145,18 +146,72 @@ To illustrate the potential of Ground, we consider two usage scenarios and the w
 % \msd{I don't think the "moderately futuristic" disclaimer is necessary - it takes away the credibility of the example}
 
 \smallitem{Scenario 1: Intelligent Data Wrangling}\\
-Janet, an analyst at a major bank, believes that customers' social network behavior can help explain their likelihood of closing their account (churning). Evaluating this hypothesis requires a pipeline of stages: data acquisition, transformation and analysis.
+Janet, an analyst at a major bank, believes that customers' social network behavior can help explain their likelihood of closing their account (churning). 
+Evaluating this hypothesis requires a pipeline of stages: data acquisition, transformation and analysis.
 We focus on the first two labor-intensive steps here.
 % Intelligent applications are emerging for each of these tasks today, which make suggestions to users. All could benefit from a more comprehensive service for data context, as we illustrate below.
 
 Janet 
 % plans to purchase a social media ``firehose'' feed for her analysis. To start, though, she 
-begins by downloading a free sample of a social media feed. Her data catalog application profiles that data and notifies her that the data lake has a very similar complete feed from the previous month. 
+begins by downloading a free sample of a social media feed. Her data catalog application connects to the data context service  
+% profiles that data 
+and notifies her that the data lake has a very similar complete feed from the previous month. 
 % Looking at that data, she finds it sufficient for her purposes; no need to pay for another feed. 
-She then begins using the application to search for data on customer retention: what is available, and who has access to it?  As Janet explores candidate schemas and data samples, the application looks up usage data in the context service and notifies her that one of her colleagues has previously joined one of them with weather data. After talking with her colleague, Janet decides to work with that dataset in her churn analysis.  
+She then begins using the application to search for data on customer retention: what is available, and who has access to it?  
+As Janet explores candidate schemas and data samples, the catalog application retrieves usage data in the context service and notifies her that Sue, from the data-science team, had previously used a database table called \verb|cust_roster| as input to a python library called \verb|cust_churn|.
+% s previously joined one of them with weather data. After talking with her colleague, 
+Examining a sample from \verb|cust_roster| and recognizing Sue's expertise in customer churn prediction,
+Janet decides to work with that table in her own churn analysis.  
 % In this scenario, the catalog application was particularly successful because it had access to broad context: not just a large corpus of raw data, but structured schemas for transformed versions of that data based on prior (schema-on-)use, as well as usage data capturing relationships between users, data and actions.
 
-Once Janet chooses datasets to focus on, she begins to profile, clean and transform them using a data preparation application. The feed API provides a  JSON document; the data prep application searches the context store for relevant transformation scripts, and suggests unnesting attributes and pivoting them into tables.  Recognizing location names in Janet's dataset, the application then consults a geo-reference dataset in the context store, maps names to locations, and informs her that many locations in her data set are far from bank branches, and may be candidates for cleaning. The application then suggests to Janet that she can derive new columns from the text of the posts, using entity extraction code written by her data science colleagues and tracked by the context service. Based on security information in the context service, Janet is warned that certain attributes of the customer data were marked confidential by another analyst; she masks them in the output. Finally, to join the social media names against the customer names, the application uses previous transformation scripts in the context service to identify and standardize the join keys appropriately. 
+Once Janet chooses datasets to focus on, she begins to profile, clean and transform them using a data preparation application. The feed API provides a  JSON document; the data prep application searches the context store for relevant transformation scripts, and suggests unnesting attributes and pivoting them into tables.
+Recognizing location names in Janet's dataset, the application then consults a geo-reference dataset in the context service, maps names to locations, and informs her that many locations in her data set are far from bank branches, and may be candidates for cleaning. 
+The application then suggests to Janet that she can derive new columns from the text of the posts, using entity extraction code written by Sue and tracked by the context service. 
+Based on security information in the context service, Janet is warned that certain attributes of the customer data were marked confidential by another analyst; she masks them in the output. 
+Finally, to join the social media names against the customer names, the application uses previous transformation scripts in the context service to identify and standardize the join keys appropriately.
+
+
+Having constructed the desired file, Janet loads the data into a BI charting tool and discovers a correlation between customer churn and their social media behavior. 
+Janet, realizing the value in her discovery, notifies Sue.
+
+
+Sue has been working on a machine learning pipeline for automated discount targeting and believes Jannet's new data may improve predictive performance.
+Sue joints Jannet's new dataset with her existing trianing data and discovers that the prediction accuracy \emph{decreases}.  
+Sue examines the schema information pulled from the original social network data and realizes that the \verb|sentiment| column is categorical and needs to be pivoted out into indicator columns \verb|isPositive|, \verb|isNeg|, and \verb|isNeut|. 
+Sue writes a python script to transform Jannet's data into a new file in the format required by the machine learning software.
+She trains a new version of the discount targeting model and deploys it to send daily coupons to customers at risk of churning.
+To ensure accurate future predictions, Sue registers her entire training pipeline including Janet social media feeds in the daily build.
+
+After several weeks of improved prediction performance, Sue receives an alert from the context service about changes in Janet's script; she also notices  a substantial drop in prediction accuracy of her pipeline. 
+Upon examination, some social media messages no longer display any sentiment in Sue's table.  now produces a range of new sentiments (e.g., \verb|isSarc|, \verb|isSad|, \ldots).
+Sue uses the context service to roll-back the sentiment analysis code in Janet's pipeline and re-run her pipeline for the past month.  
+This fixes her problem. 
+Sue wonders if she can simply reestablish the older versions of Janet's scripts as authoritative; however the context service shows that other pipelines in the organization are now dependent upon the new version of Janet's scripts.  Sue calls a meeting with the relevant stakeholders to untangle the situation.
+
+What did we highlight?
+\begin{itemize}
+    \item data discovery: the feed and the customer data. application metadata.
+    \item expert-sourcing: application metadata
+    \item mapping recommendations: placename-to-geo
+    \item security alerts: data masking
+    \item outlier detection/cleaning: geo-reference too far from the bank branches
+    \item entity resolution: social handles and customer names
+    \item code recommendations: data wrangling steps, sentiment analysis routines, etc
+    
+    \item backward provenance:  identifying cause of problem
+    \item forward provenance: identifying affected services ..
+    \item change detection/versioning/notification
+    \item impact analysis
+\end{itemize}
+
+
+
+
+
+
+
+
+
 % While the data wrangling application could have made some of these suggestions based on intrinsic properties of the data being transformed, it benefited substantially from peripheral context on other datasets and scripts. 
 % : reference data like geographic distributions of branches, repositories of data science routines, and the analytic context that the datasets being wrangled came from the data lake with security annotations. \emph{Would be nicer to get an analytic context about Janet's behavior.}
 
@@ -184,32 +239,32 @@ Some features save her time on the task she is directly attempting; others provi
 % Want to be able to reward staff for improving models. 
 % Want to reallocate staff when the benefit of experimenting with the model no longer justifies the effort.}
 
-\joey{Here is a rough stab at something from the status quo perspective.  I could easily rewrite this post Ground but in reality Ground would prevent these sort of problems in the first place \ldots}
+% \joey{Here is a rough stab at something from the status quo perspective.  I could easily rewrite this post Ground but in reality Ground would prevent these sort of problems in the first place \ldots}
 
-\smallitem{Scenario 2: NAME ME}\\
-Sue, a data-scientist at a major online social media organization, recently joined their news team to develop a more personalized targeting system.
-Sue begins by examining the code responsible for the news feed and discovers that it pulls content from several different HIVE tables \verb|user_fin| and \verb|ad_posts1| and relies the on the fields \verb|vis_2|, \verb|score3|, and \verb|features_2| when determining how content is ordered. 
-Sue is curious about the contents and meaning of this data and spends the next few days asking team members and running statistics.
-She discovers that the table is filled by a cron job created by an intern that is no longer with the company and that months of data are missing.
-% Her team warns her to be careful when changing these tables since other teams may depend on them.
-Upon examining the cron job, Sue realizes that these tables are constructed by applying a set of machine learning scripts that pull from other tables across the company and several of those tables are no longer being updated.
-She posts on internal forms and in a few days discovers that the contents in the stagnant tables had been re-factored into standard units and are now exported in a new social network storage system.
-Sue realizes that she can improve performance by simply updating the cron jobs but worries that changes may adversely affect others who depend on the data.  
-Again she posts on forums and waits for responses.
-After a few days without response, Sue pushes an updated version of the cron job and attempts to back fill the the \verb|user_fin| and \verb|ad_posts1| tables with updated units.
+% \smallitem{Scenario 2: NAME ME}\\
+% Sue, a data-scientist at a major online social media organization, recently joined their news team to develop a more personalized targeting system.
+% Sue begins by examining the code responsible for the news feed and discovers that it pulls content from several different HIVE tables \verb|user_fin| and \verb|ad_posts1| and relies the on the fields \verb|vis_2|, \verb|score3|, and \verb|features_2| when determining how content is ordered. 
+% Sue is curious about the contents and meaning of this data and spends the next few days asking team members and running statistics.
+% She discovers that the table is filled by a cron job created by an intern that is no longer with the company and that months of data are missing.
+% % Her team warns her to be careful when changing these tables since other teams may depend on them.
+% Upon examining the cron job, Sue realizes that these tables are constructed by applying a set of machine learning scripts that pull from other tables across the company and several of those tables are no longer being updated.
+% She posts on internal forms and in a few days discovers that the contents in the stagnant tables had been re-factored into standard units and are now exported in a new social network storage system.
+% Sue realizes that she can improve performance by simply updating the cron jobs but worries that changes may adversely affect others who depend on the data.  
+% Again she posts on forums and waits for responses.
+% After a few days without response, Sue pushes an updated version of the cron job and attempts to back fill the the \verb|user_fin| and \verb|ad_posts1| tables with updated units.
 
-Over the next few weeks the accuracy of the targeting system begins to decline.
-Concerned, Sue studies the machine learning code and after extensive testing realizes that the hyper-parameters were tuned for the old data which had been updated less frequently.  
-She adjust the hyper-parameters but performance continues to degrade.  
-She studies the data further and begins to question the features she is pulling from the new graph storage system which correlate closely with the errors in her predictions.
-After extensive discussions with adjacent teams she discovers that one of the statistical models used to populate the data in the new graph system had been pulling data from the tables she was updating resulting in a statistical feedback cycle. 
+% Over the next few weeks the accuracy of the targeting system begins to decline.
+% Concerned, Sue studies the machine learning code and after extensive testing realizes that the hyper-parameters were tuned for the old data which had been updated less frequently.  
+% She adjust the hyper-parameters but performance continues to degrade.  
+% She studies the data further and begins to question the features she is pulling from the new graph storage system which correlate closely with the errors in her predictions.
+% After extensive discussions with adjacent teams she discovers that one of the statistical models used to populate the data in the new graph system had been pulling data from the tables she was updating resulting in a statistical feedback cycle. 
 
-This frustrating narrative sadly reflects the reality of many data-scientists.  
-Data pipelines that begin and end it a range of data systems across an organization are common and often drive many of the core services. 
-These pipelines are the product of the evolution of data and code and are susceptible to changes in both.  
-Their interaction and development is hard to capture entirely in traditional code and data systems and often relies heavily on the collective wisdom of an organization.
-Sue, the data-scientist, must therefore spend a substantial amount of time trying to understand these complex relationships which can slow progress and introduce costly and difficult to diagnose bugs. 
-Moreover, with greater context, many of the problems Sue encountered would never have occurred and instead Sue could have devoted her time to building better models.   
+% This frustrating narrative sadly reflects the reality of many data-scientists.  
+% Data pipelines that begin and end it a range of data systems across an organization are common and often drive many of the core services. 
+% These pipelines are the product of the evolution of data and code and are susceptible to changes in both.  
+% Their interaction and development is hard to capture entirely in traditional code and data systems and often relies heavily on the collective wisdom of an organization.
+% Sue, the data-scientist, must therefore spend a substantial amount of time trying to understand these complex relationships which can slow progress and introduce costly and difficult to diagnose bugs. 
+% Moreover, with greater context, many of the problems Sue encountered would never have occurred and instead Sue could have devoted her time to building better models.   
 
 
 
