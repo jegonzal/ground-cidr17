@@ -56,40 +56,112 @@
 \newcommand{\groundwire}{GroundWire\xspace}
 
 \newcommand{\kw}[1]{{\small\texttt{#1}}}
+\newcommand{\lilemail}[1]{\email{\small #1}}
 
 
 
+\title{Ground: A Unified Framework for Data Context at Scale }
+% \title{Grounding Data Context Through Big Metadata  }
+% \title{Grounding Big Data with Data Context Services}
 
-\title{Grounding Big Data with Data Context Services}
-\numberofauthors{3}
+\numberofauthors{8}
 \author{
-Groundlings
+% 1st. author
+\alignauthor
+Joseph M.\ Hellerstein\\
+      \affaddr{Berkeley}\\
+      \lilemail{AuthorEmail@gmail.com}
+% 2nd. author
+\alignauthor
+Vikram Sreekanti\\
+      \affaddr{Berkeley}\\
+      \lilemail{AuthorEmail@gmail.com}
+% 3rd. author
+\alignauthor
+Joseph E. Gonzalez\\
+      \affaddr{Berkeley}\\
+      \lilemail{AuthorEmail@gmail.com}
+\and  % use '\and' if you need 'another row' of author names
+% 4th. author
+\alignauthor
+Akon Dey\\
+      \affaddr{Awake Networks}\\
+      \lilemail{AuthorEmail@gmail.com}
+% 5th. author
+\alignauthor
+Mark Donsky\\
+      \affaddr{Cloudera}\\
+      \lilemail{AuthorEmail@gmail.com}
+% 6th. author
+\alignauthor
+Sreyashi Nag\\
+      \affaddr{University of Delhi}\\
+      \lilemail{AuthorEmail@gmail.com}
+\and
+\alignauthor
+Krishna Ramchandran\\
+    \affaddr{FICO}\\
+    \lilemail{AuthorEmail@gmail.com}
+\alignauthor
+Chang She\\
+    \affaddr{Cloudera}\\
+    \lilemail{AuthorEmail@gmail.com}
+\alignauthor
+Carl Steinbach\\
+    \affaddr{LinkedIn}\\
+    \lilemail{AuthorEmail@gmail.com}
 }
 
 \maketitle
 
 \begin{abstract}
 Ground is an open-source \emph{data context service}; a system to manage all the peripheral information that informs the use of data. 
-The way we use data has changed both philosophically and practically in the last decade, creating an opportunity for new data context services to foster further innovation in Big Data systems and applications. We provide motivation and design guidelines, present our initial design of a common metamodel and API, and explore the current state of the storage solutions that could serve the needs of a data context service. Throughout, we highlight opportunities for new research and engineering solutions.
+\joey{I know we keep referring to the technology as a service but perhaps the paper should refer to it as a framework?}
+The way we use data has changed both philosophically and practically in the last decade, creating an opportunity for new data context services to foster further innovation in Big Data systems and applications. 
+We provide motivation and design guidelines, present our initial design of a common metamodel and API, and explore the current state of the storage solutions that could serve the needs of a data context service. 
+Throughout, we highlight opportunities for new research and engineering solutions.
 \end{abstract}
 
 \section{From Crisis to Opportunity}
 \vikram{Like we talked about yesterday, should we flip this and talk about the traditional database stack instead of introducing big data first?} 
-The open-source Big Data movement, spearheaded by Hadoop, is often discussed in terms of changes in usage. This includes the ``three V's'' of Volume, Velocity and Variety of data being captured, and the agile working style typified by ``schema-on-use'' and polyglot programming models.
+The open-source Big Data movement, spearheaded by Hadoop, is often discussed in terms of changes in usage. This includes the ``three V's'' of Volume, Velocity and Variety of data being captured, and the agile working style typified by ``schema-on-use'' and a wide diversity programming models.
 
-Much less widely discussed is a profound shift toward a decoupled software architecture. Traditionally, database systems were consumed as monolithic stacks of functionality, regardless of how well-factored they were under the covers. %\msd{Although} 
-A DBMS included a consistent storage engine, a metadata catalog, a dataflow engine, a language compiler and optimizer, an execution scheduler/runtime, and facilities for data ingest and queueing. %\msd{, it was simply seen as a DBMS}. 
-By contrast, in today's Big Data stack, nearly all of these components are explicitly independent and swappable, with multiple choices in wide use today. The decoupled architecture encourages innovation and specialization, and has been embraced by both developers and customers.
+% Much less widely discussed is a 
+A driving force behind this proliferation of Big Data technologies is the
+profound shift towards highly decoupled data systems. 
+Traditionally, data systems were often designed by a single vendor and deployed as monolithic stacks spanning data ingest, storage, retrieval, and governance.
+% regardless of how well-factored they were under the covers. %\msd{Although} 
+A traditional DBMS included a consistent storage engine, a metadata catalog, a dataflow engine, a language compiler and optimizer, an execution scheduler/runtime, and facilities for data ingest and queueing all designed to work closely together.
+ %\msd{, it was simply seen as a DBMS}. 
+By contrast, in today's Big Data stack, nearly all of these components are explicitly independent and interchangeable with very narrow APIs.
+% swappable, with multiple choices in wide use today. 
+This decoupled architecture has enabled substantial innovation and specialization by fostering competition both in technology and price.
+% specialization 
+% % driving much of the excitement around big-data, 
+% and has been embraced by both developers and customers.
 
 \subsection{Crisis: Big Metadata}
-One negative side-effect of this diversity is the lack of an agreed-upon service
+
+An insidious consequence of the disaggregated big data systems 
+% architecture
+% One negative side-effect of this diversity
+is the lack of a standard mechanism
 % for shared metadata 
 %\msd{metadata or data context?} 
-for these diverse components to assemble a collective metadata ``signature'' or ``paper trail'' of their content and behavior.
-The only widely-deployed option is the Hive Metastore, which serves simple relational schemas---a dead end for representing the Variety of Big Data. As a result, most ``Data Lake'' projects lack 
-even the most rudimentary metadata about their components' behavior.
+% for these independently designed components 
+to assemble a collective understanding of the origin, scope, and usage of the data they manage.
+% metadata ``signature'' or ``paper trail'' of their content and behavior.
+In the absence of a better solution to this pressing need,
+% The current best solution to this pressing need 
+% The only widely-deployed option 
+% is the 
+many have turned to the 
+Hive Metastore, which serves simple relational schemas---a dead end for representing the Variety of Big Data. 
+As a result, most ``Data Lake'' projects lack 
+even the most rudimentary information about the data they contain or how it is being used. 
+% their components' behavior.
 % ; it is often not even possible to discover what is being stored, much less how to manage it intelligently. 
-For emerging Big Data customers and vendors, this Big Metadata problem is hitting a crisis point.  
+For emerging Big Data customers and vendors, this \emph{Big Metadata} problem is hitting a crisis point.  
 
 Two significant classes of end-user problems follow directly from this technical problem.
 %\jmh{Funny transition from software stack problem to usage problem. Need to start with interoperability and grow from there, or change preceding paragraph to focus on usage not the stack.}
@@ -679,23 +751,23 @@ relational database catalogs, or scientific collaborations, or the models of a t
 %%%%%%%%%%%
 
 \subsection{Key Services}
-Ground's functionality is backed by five decoupled subservices.  For agility, we are starting the project using existing open source solutions for each.  We anticipate that some of these will require additional features for our purposes. In this section we go over these subservices and our initial choices of solutions, and highlight some of the research opportunities we foresee.
+Ground's functionality is backed by five decoupled subservices.  For agility, we are starting the project using existing open source solutions for each.  We anticipate that some of these will require additional features for our purposes. In this section we discuss these the role subservices and our initial choices of solutions, and we highlight some of the research opportunities we foresee.
 
 \smallitem{Ingest: Insertion, Crawlers and Queues}.  Metadata may be pushed into Ground or require crawling; it may arrive interactively or in batches. 
 % These kinds of services have been explored for data ingest, and only need modest modification for Data Context.  
 The main issue is to decouple the systems plumbing of ingest from an extensible set of metadata and feature extractors.
-To this end, ingest has both Belowground and Aboveground APIs.
+To this end, ingest has both Belowground and Aboveground APIs. \vikram{Any reason we switched from underground to belowground?}
 Context objects appear for ingestion into Ground via a Belowground queue API. As metadata arrives, Ground publishes notifications to the associated data via an Aboveground queue. ``Value-added'' Aboveground applications can subscribe to these events, fetch the associated data, and generate additional metadata asynchronously. For example, an agent can subscribe for notifications of file data, hand off the files to an entity extraction system like OpenCalais or DeepDive, and subsequently tag the Common Ground objects corresponding to the files with labels for the extracted entities.
 % Interactive insertion of metadata needs to be supported efficiently by the metadata storage component; batch insertion should make use of queueing services to handle bulk delivery and bursty arrivals.  
 % Passive insertion needs to be handled via a data crawler that can register metadata from external services with Ground, and see if 
 We recently extended the Gobblin data ingest system to publish metadata for the objects it crawls (from 
-sources like filesystems, databases, etc.) into Ground via the Kafka pub/sub system, which is made visible Aboveground. 
+sources like filesystems, databases, etc.) into Ground via the Kafka pub/sub system, which is made visible Aboveground. \vikram{Should we have this here or in our "State of the System" part? I think it makes more sense to keep them separate.}
 Metadata feature extraction is an active research area in both industry and academia; we hope that commodity APIs for scalable, continuous data crawling and ingest will drive more adoption and innovation in this area. 
 % Similarly, this is a rich area for industrial collaboration: the vendor-neutral aspect of Ground's plumbing should foster a healthy ecosystem of interoperable applications at higher levels.
 
 \smallitem{Versioned Metadata Storage}.  Ground must be able to efficiently store and retrieve metadata with the full richness of the Common Ground metamodel, including flexible version management of code and data, general-purpose model graphs and lineage storage. 
 % Ground also needs to reference external data and handle Schr\"{o}dinger versioning.  
-While none of the existing open source DBMSs is targeted at this data model, one can implement it in a shim layer above many of them. We discuss this at greater length in Section~\ref{sec:perf} we examine a range of open-source DBMSs; as noted there we believe this is an area for significant database research.
+While none of the existing open source DBMSs is targeted at this data model, one can implement it in a shim layer above many of them. We discuss this at greater length in Section~\ref{sec:perf} we examine a range of open-source DBMSs; as noted there, we believe this is an area for significant database research.
 
 % Note that Ground is not intended as the primary interface for accessing the data that is referenced by metadata; Ground is expected to \emph{describe} external data and track it, not serve it.  Hence Ground's most basic requirement for external data is to know how to store a unique ID for each item it tracks, and return that ID to applications that request it.  In an ideal setting, each external data item is versioned, hence each version has a unique ID.  However if the external item is mutable and not versioned, Ground generates \emph{Schr\"{o}dinger versions} lazily: each time we observe an object we assume it changes, and assign it a new version (and version ID).  
 % This is discussed in more detail in the Common Ground design~\cite{commonground}.
@@ -713,7 +785,7 @@ As we also explore in Section~\ref{sec:prototype}, various open-source solutions
 
 % \textbf{MVP:}  Currently we are handling ingest solely via simple push insertion APIs that call into our metadata store via SQL.  However we envision integrating open-source solutions like Kafka for queuing, and Gobblin for crawling and data ingest from remote sources.  We are also eager to explore APIs to plug in third-party solutions for  extracting metadata from crawled data; two examples we are OpenCalais (a free automated service for entity extraction) and Trifacta (a commercial, semi-automatic solution for data transformation).  We also recognize that there are boundless R\&D opportunities here, some of which could be part of Ground, many of which should exist as standalone solutions above Ground.  \jmh{another research opening, though more about opportunities above ground.}  We look forward to integration with other research and non-research colleagues here.
 
-\smallitem{Identity and Authorization Integration}.  Identity management and authorization are required to use Ground service; interoperability is important here, as most organizations dictate a previously-chosen authorization service when adopting new technology.  More importantly, authorization is a semantic notion with wide flexibility: the policies of a federal defense agency are likely to be wildly different in nature from those of a corporate marketing department, which in turn differs from a consortium of scientists interested in reproducibility.  The flexible design of Ground's metamodel should support a wide variety of authorization metadata (ownership, auditing, content labeling etc.) and design policy over that metadata.  An open design question is whether Ground needs to \emph{enforce} policy, or merely store it and notify Aboveground applications.  As another open question, note the subtle challenges handling versioning across metadata and policy. Suppose the authorization policies of a past time are considered unsafe today---what should be done for users today who want to analyze past behavior? This is a case where good people may disagree about the virtues of immutability and reproducibility. More research is required here.
+\smallitem{Identity and Authorization Integration}.  Identity management and authorization are required to use Ground service \vikram{I don't know what this was supposed to say, but it doesn't make much sense?}; interoperability is important here, as most organizations dictate a previously-chosen authorization service when adopting new technology.  More importantly, authorization is a semantic notion with wide flexibility: the policies of a federal defense agency are likely to be wildly different in nature from those of a corporate marketing department, which in turn differs from a consortium of scientists interested in reproducibility.  The flexible design of Ground's metamodel should support a wide variety of authorization metadata (ownership, auditing, content labeling etc.) and design policy over that metadata.  An open design question is whether Ground needs to \emph{enforce} policy, or merely store it and notify Aboveground applications.  As another open question, note the subtle challenges handling versioning across metadata and policy. Suppose the authorization policies of a past time are considered unsafe today---what should be done for users today who want to analyze past behavior? This is a case where good people may disagree about the virtues of immutability and reproducibility. More research is required here. \vikram{If we have space (or maybe for the full appear), we should also note that time travel for application context is okay / good / desired, but for auth policy, it's bad.}
 
 % \textbf{MVP:}  The current MVP has no support for identity management and authorization.  However our initial use case has us tracking UC Berkeley student IDs, Github identities, UNIX uids from instructional computing, and associations between the three; visibility of things like grading scripts and their outputs will depend on policies regarding these identities.  In the short term we expect to integrate with Google oAuth services as exposed at UC Berkeley next, and to explore the way that policy is specified and possibly enforced in our prototpype environment.  Our longterm roadmap here remains open; we expect a need to collaborate closely with partners in application domains to get further requirements.  \jmh{Possible tie to Raluca's work here, at minimum as an example of a non-standard approach to these issues.}
 
@@ -731,32 +803,41 @@ As we also explore in Section~\ref{sec:prototype}, various open-source solutions
 % \label{sec:metamodel}
 % \subsection{Underground Services}
 
-\section{Ground Prototype}
+\section{Ground \MakeLowercase{v}0}
 \label{sec:prototype}
-\vikram{I used prototype here as a placeholder, but I don't think we should call it that. Prototype sort of sounds like we built a thing and we're going to throw it away, whereas in reality, we have code that we're going to release as an Alpha in the next 2 months.}
+% \vikram{I used prototype here as a placeholder, but I don't think we should call it that. Prototype sort of sounds like we built a thing and we're going to throw it away, whereas in reality, we have code that we're going to release as an Alpha in the next 2 months.}
 
-\subsection{State of the System}
-Our initial version of Ground is written in Java and implements the data model discussed in Section 3 and  provides a REST API that facilitates interaction with the system. 
-An integral part of our initial architecture has been evaluating different "state of play" backing stores. 
-In particular, Ground currently is compatible with Postgres, Apache Cassandra, TitanDB, and Neo4j. 
+% \subsection{State of the System}
+Our initial version of Ground implements the data model discussed in Section~\ref{sec:metamodel} and provides a REST API that facilitates interaction with the system. 
+As discussed in the previous section, it currently makes use of Gobblin for crawling and ingest and Kafka for queueing and pub/sub. 
+We have integrated and evaluated a number of backing stores for versioned storage, including PostgreSQL, Cassandra, TitanDB and Neo4j; we report on results later in this section
+% An integral part of our initial architecture has been evaluating different "state of play" backing stores. 
+% In particular, Ground currently is compatible with Postgres, Apache Cassandra, TitanDB, and Neo4j. 
+We are currently integrating ElasticSearch for text indexing, and are still evaluating options for ID/Authorization and Scheduling/Workflow. 
 
-In addition to the basics of the system, we have three external sources of data context that we have integrated with Ground:
+In addition to the basics of the system, we have three protoypical sources of data context integrated with Ground:
 
-\smallitem{Hive Metastore.} One very common type of metadata is the relational schemas that are stored in the Hive Metastore. 
-As a part of our prototype, we have built a connector that allows Ground to serve as a drop-in replacement for the existing Hive Metastore. 
-One major benefit of using Ground as Hive's relational catalog is that schema versioning naturally falls out of this set up. 
+\smallitem{Relational Schemas: Hive Metastore.} The Hive Metastore provides relational schema support for the Hadoop stack.
+As a part of our prototype, we have built a connector that allows Ground to serve as a drop-in replacement for Hive Metastore.
+One key benefit of using Ground as Hive's relational catalog is Ground's built-in support for versioning.
+%, which---combined with the append-only nature of HDFS---makes it possible to ``time travel'' to view Hive tables as they appeared in the past.
 
-\smallitem{HDFS Metadata.} We have built a pipeline using Gobblin and Apache Kafka that extracts file system metadata from HDFS and writes to Kafka. 
-The metadata is then ingested into Ground. 
-This pipeline notifies us of any new files that are added to HDFS. 
-In addition, we are planning on adding hooks which allow Ground to call out to other services (e.g., a parser or featurizer that will extract additional metadata) that might be interested in new files. 
+\smallitem{Filesystem Metadata: HDFS} We have extended Gobblin to extract file system metadata from its HDFS crawls, and publish them Ground's Kafka connector. The resulting 
+metadata is then ingested into Ground, and notifications are published on a Kafka channel for applications to respond to.
+% This pipeline notifies us of any new files that are added to HDFS. 
+% In addition, we are planning on adding hooks which allow Ground to call out to other services (e.g., a parser or featurizer that will extract additional metadata) that might be interested in new files. 
 
-\smallitem{Git Version History.} Another key kind of metadata is code versions. 
-An integral part of tracking data usage effectively is understanding which code versions were used to transform or wrangle data. 
+\smallitem{Code Versions: Git History.} Another key kind of metadata is code versions; as described in the introduction, code it key to understanding the meaning and usage of data.
+Today, a great deal of code is versioned in git repositories.
+% An integral part of tracking data usage effectively is understanding which code versions were used to transform or wrangle data. 
 To that end, we have ingested version history graphs from git repositories into Ground.
 \\ 
+\smallitembot
 
-These three use cases combined can  provide ``time travel'' for Hive queries. 
+
+\jmh{The HDFS crawl doesn't really feel like it fits into the time travel; is it used to access the past? If not maybe skip the ETL point and move this up to the Hive Metastore bullet}.
+These three use cases represent three very different kinds of metadata, exercising the flexibility of our model graphs and underlying storage. Git has a fairly rich versioning model, which exercises our version graphs. Together these use cases
+can  provide ``time travel'' for Hive queries. 
 HDFS by virtue of being an append-only file system gives us access to old versions of data via the snapshots functionality. 
 Using Ground, we can access previous versions of Hive schemas as well as the code used to ETL our data. Thus, we can functionally recreate a previous state of the database.
 
@@ -774,7 +855,6 @@ We then retrieved the sessions that were connected to each version in order to e
 While both these use cases are toy examples, both in scale and in actual functionality, we believe that they are accurate stand-ins for the larger and more ``real world'' use cases described. These use cases were the basis of our initial benchmarks.
 
 \subsection{Initial Results}
-\vikram {GRAPHS GO HERE.}
 \begin{figure}
 \vspace{1in}
 The first graph goes here.
@@ -784,9 +864,9 @@ The first graph goes here.
 \end{figure}
 
 \begin{figure}
-\vspace{1in}
-The second graph goes here.
-\vspace{1in}
+%\vspace{1in}
+\includegraphics[width=0.75\linewidth]{trans_closure.png}
+%\vspace{1in}
 \caption{Figure 2.}
 \label{fig:fig2}
 \end{figure}
@@ -839,12 +919,12 @@ We acknowledge that with further tuning, these systems might perform better than
 \label{sec:relwork}
 Work related to this paper comes in a variety of categories; for brevity we summarize the conceptual highlights here, and omit scholarly reference to software that's easily found on the web. More traditional references will be included in the final paper. 
 
-Historical Master Data Management and ETL solutions are ill-suited to our domain; they were designed for maintaining invariants like data integrity and access control in a carefully curated world of enterprise applications, marts and warehouses. While this is unnatural in today's agile environments, it is interesting to ask what can be salvaged. Can curation invariants be inferred rather than authored? If they are ``soft'' invariants, how should software and organizations maintain them? What kinds of user experiences can blend the governance of traditional tools with the agility of ad hoc analytics?  This is an excellent opportunity for innovation. Meanwhile, readers familiar with these systems will be able to map them into parts of our ABCs of context: ``business'' metadata falls into Category A, while ``technical'' or ``operational'' metadata'' falls into both A (for system specs) and B (for usage and lineage).
+Historical Master Data Management and ETL solutions are ill-suited to our domain; they were designed for maintaining invariants like data integrity and access control in a carefully curated world of enterprise applications, marts and warehouses. While this is unnatural in today's agile environments, it is interesting to consider what can be salvaged. Can curation invariants be inferred rather than authored? If they are ``soft'' invariants, how should software and organizations maintain them? What kinds of user experiences can blend the governance of traditional tools with the agility of ad hoc analytics?  This is an excellent opportunity for innovation. Meanwhile, readers familiar with these systems will be able to map them into parts of our ABCs of context: ``business'' metadata falls into Category A, while ``technical'' or ``operational'' metadata'' falls into both A (for system specs) and B (for usage and lineage).
 
 There are a few notable recent systems that provide data context. OpenChorus and IBM LabBook offer end-user features for collaboration and social data analysis---exemplars of valuable AboveGround functionality.
 LinkedIn WhereHows and Google Goods \jmh{to finish}.  By contrast, Ground is focused on the design of a shared services layer for a range of Aboveground applications to share in unanticipated ways. This raises the unique challenges and opportunities we are pursuing.
 
-In the Big Data world, there are two emerging metadata service options that are targeting general-purpose use: Cloudera Navigator and Apache Atlas led by Hortonworks and their customers. Both of these are built on flexible graph metamodels that inspired the Common Ground \mantle; neither provides the \core versioning we propose, and neither is perceived as a vendor-neutral option by customers.  Like us, these systems are also exploring ``underground'' alternatives for storage and querying, and we look forward to learning more from them on those topics. 
+In the Big Data world, there are two emerging metadata service options that are targeting general-purpose use: Cloudera Navigator and Apache Atlas led by Hortonworks and their customers. Both of these are built on flexible graph metamodels that inspired the Common Ground \mantle; neither provides the \core versioning \vikram{version graph versioning sounds weird} we propose, and neither is perceived as a vendor-neutral option by customers.  Like us, these systems are also exploring ``underground'' alternatives for storage and querying, and we look forward to learning more from them on those topics. 
 
 % Custom metadata stores have been open-sourced by LinkedIn (WhereHows) and FINRA (Herd); both of these are ``opinionated'' rather than general-purpose: specific to use cases in their organizations. They provide a good challenge for Ground, as examples of use cases to be supported. 
 
@@ -864,10 +944,7 @@ In a final note, decades after the early work on the Postgres storage system, th
 
 \section{Conclusion}
 \label{sec:conclusion}
-Data context services are a critical missing component in today's Big Data stack. Designed properly, they should benefit not only data workers, but also researchers and 
-
-\jmh{Fire up the reader ... leave on a note of potential impact and open research opportunity. Maybe two big buckets of future work Belowground and Aboveground if we skip ``Challenges''. In essence those two buckets cover most of database research today!  So this is a playground and dogfood all at once, to mix metaphors badly.}
-
+Data context services form a critical missing layer in today's Big Data stack, and deserve careful consideration given the central role they can play. They alos raise interesting challenges and opportunities spanning the breadth of database research. The basic design requirements---model-agnostic, immutable, scalable services---seem to present new database systems challenges Underground. Meanwhile the Aboveground opportunities for innovation cover a broad spectrum from human-in-the-loop applications, to machine learning pipeline development, to critical infrastructure for IT management. Ground is a community effort to build out this roadmap---providing useful open source along the way, and an environment where advanced ideas can be explored and plugged in.
 
 \bibliography{ground}
 \end{document}
