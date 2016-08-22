@@ -1210,8 +1210,8 @@ two emerging metadata systems address governance for Big Data: Cloudera Navigato
 Both provide graph models that inspired the Common Ground \mantle; neither provides versioning or is perceived as vendor-neutral. % These systems are also exploring ``underground'' alternatives for storage.
 
 There is a broad space of efforts that illustrate the possibilities of data context. 
-There are many applications and research projects for tasks like cataloging, wrangling, and lineage analysis. 
-OpenChorus and IBM LabBook provide portal-type applications for collaboration and social data analysis.
+There are many commercial applications and research projects for Aboveground tasks: cataloging, wrangling, lineage analysis, query and workflow management, information extraction, ontology management, etc. 
+OpenChorus and IBM LabBook provide overarching portals for collaboration.
 LinkedIn WhereHows, FINRA Herd and Google Goods are metadata services built to support data workflows in their respective organizations; Goods bundles what we call Underground services with various proprietary services we might describe as Aboveground applications.
 % Alation, Tamr, Waterline,
 % ReproZip, Burrito
@@ -1219,7 +1219,7 @@ LinkedIn WhereHows, FINRA Herd and Google Goods are metadata services built to s
 % VizTrails
 All of the above make use of specific metamodels customized to their needs. By contrast, Ground is focused on designing a reusable service to enable diverse applications and organizations to integrate their notions 
 of data context. 
-This changes the challenges and opportunities we are pursuing, and hopefully will encourage broader adoption and innovation.
+This shapes the core challenges and opportunities we are pursuing, and hopefully will encourage adoption and innovation.
 
 
 % Custom metadata stores have been open-sourced by LinkedIn (WhereHows) and FINRA (Herd); both of these are ``opinionated'' rather than general-purpose: specific to use cases in their organizations. They provide a good challenge for Ground, as examples of use cases to be supported. 
@@ -1233,7 +1233,7 @@ This changes the challenges and opportunities we are pursuing, and hopefully wil
 % Postgres, DataHub, Datomic Pachyderm, Noms
 Our initial assessment of storage engines suggests a need for more work: both a deeper evaluation of what exists and very likely designs for something new. There are many research papers and active workshops on graph databases (e.g., \cite{grades16}), but we found the leading systems (Neo4j, Titan) lacking. 
 % \joey{should we breifly say how?}\jmh{Implicit in perf section. space is very short.} \joey{fair}
-Interest in no-overwrite databases has only recently reemerged, including the DataHub research project, and the Datomic, Pachyderm and Noms systems.  The combination of these two kinds of functionality 
+Interest in no-overwrite databases has only recently reemerged, including the DataHub research project, and the Datomic, Pachyderm and Noms systems.  The combination of graphs and immutable versions
 appears to be a new challenge.
 % In future work we plan to assess this space more deeply. \joey{not sure what we mean by assess this space?  Perhaps we want to say: In the future we plan to revisit many ideas (e.g., ) in these earlier systems as we develop systems for metadata management.}\joey{addressed!}
 
