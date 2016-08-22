@@ -23,16 +23,16 @@
 \newcommand{\smallitembot}{\vspace{0.5em}\noindent}
 \bibliographystyle{abbrv}
 
-\newcommand{\jmh}[1]{{\textcolor{red}{[[#1 -- jmh]]}}}
-\newcommand{\joey}[1]{{\textcolor{cyan}{[[#1 -- jeg]]}}}
-\newcommand{\msd}[1]{{\textcolor{green}{[[#1 -- msd]]}}}
-\newcommand{\akon}[1]{{\textcolor{orange}{[[#1 -- akon]]}}}
-\newcommand{\vikram}[1]{{\textcolor{blue}{[[#1 --vikram]]}}}
-% \newcommand{\jmh}[1]{}
-% \newcommand{\joey}[1]{}
-% \newcommand{\msd}[1]{}
-% \newcommand{\akon}[1]{}
-% \newcommand{\vikram}[1]{}
+% \newcommand{\jmh}[1]{{\textcolor{red}{[[#1 -- jmh]]}}}
+% \newcommand{\joey}[1]{{\textcolor{cyan}{[[#1 -- jeg]]}}}
+% \newcommand{\msd}[1]{{\textcolor{green}{[[#1 -- msd]]}}}
+% \newcommand{\akon}[1]{{\textcolor{orange}{[[#1 -- akon]]}}}
+% \newcommand{\vikram}[1]{{\textcolor{blue}{[[#1 --vikram]]}}}
+\newcommand{\jmh}[1]{}
+\newcommand{\joey}[1]{}
+\newcommand{\msd}[1]{}
+\newcommand{\akon}[1]{}
+\newcommand{\vikram}[1]{}
 
 % \newcommand{\cab}{CAB\xspace}
 \newcommand{\core}{version graph\xspace}
@@ -78,9 +78,11 @@ Joseph M.\ Hellerstein\textsuperscript{*},
 Vikram Sreekanti\textsuperscript{*}, 
 Joseph E. Gonzalez\textsuperscript{*},
 Sudhanshu Arora\textsuperscript{$\ddagger$},
+Arka Bhattacharyya\textsuperscript{*},
 Shirshanka Das\textsuperscript{$\dagger$}, 
 Akon Dey\textsuperscript{$\sharp$}, 
 Mark Donsky\textsuperscript{$\ddagger$}, 
+Gabriel Fierro\textsuperscript{*},
 Sreyashi Nag\textsuperscript{$\S$}, 
 Krishna Ramachandran\textsuperscript{$\natural$}, 
 Chang She\textsuperscript{$\ddagger$},
@@ -214,7 +216,7 @@ warehousing leaders held that
 bringing data $\ldots$ into the data warehouse environment without integrating it.''}~\cite{inmon2005building} 
 Second, 
 the data management systems designed for these users were often built by a single vendor and deployed as a
-monolithic stack spanning data ingest, storage, retrieval, and governance.
+monolithic stack. % spanning data ingest, storage, retrieval, and governance.
 % regardless of how well-factored they were under the covers. %\msd{Although} 
 A traditional DBMS included a consistent storage engine, a dataflow engine, 
 a language compiler and optimizer, a runtime scheduler, a metadata catalog, and facilities for data ingest 
@@ -224,10 +226,10 @@ and queueing---all designed to work closely together.
 As computing and data have become orders of magnitude more efficient, changes have emerged for both of these patterns. 
 Usage is changing profoundly, as expertise and control shifts from the central accountancy of an IT department to 
 the domain expertise of ``business units'' tasked with extracting value from data~\cite{gartner}. 
-The changes in economics and usage bring on the ``three V's'' of Big Data: Volume, Velocity and Variety.
-Resulting best practices focus on open-ended ``schema-on-use''
-data lakes and agile development, in support of exploratory analytics and innovative application intelligence~\cite{patil2012data}. 
-Second, while the systems software that has emerged in this space is familiar, the overriding architecture is profoundly 
+The changes in economics and usage brought on the ``three V's'' of Big Data: Volume, Velocity and Variety.
+Resulting best practices focus on open-ended schema-on-use
+data ``lakes'' and agile development, in support of exploratory analytics and innovative application intelligence~\cite{patil2012data}. 
+Second, while many pieces of systems software that have emerged in this space are familiar, the overriding architecture is profoundly 
 different. In today's leading open source
 data management stacks, nearly all of the components 
 of a traditional DBMS are explicitly independent 
@@ -272,15 +274,15 @@ In the absence of a better solution to this pressing need,
 % The current best solution to this pressing need 
 % The only widely-deployed option 
 % is the 
-many have turned to the 
-Hive Metastore, which serves simple relational schemas---a dead end for representing the Variety of Big Data. 
+the 
+Hive Metastore is sometimes used, but it only serves simple relational schemas---a dead end for representing a Variety of data. 
 As a result, data lake projects typically lack 
 even the most rudimentary information about the data they contain or how it is being used. 
 % their components' behavior.
 % ; it is often not even possible to discover what is being stored, much less how to manage it intelligently. 
 For emerging Big Data customers and vendors, this \emph{Big Metadata} problem is hitting a crisis point.  
 
-Two significant classes of end-user problems follow directly from the absence of metadata services.
+Two significant classes of end-user problems follow directly from the absence of shared metadata services.
 %\jmh{Funny transition from software stack problem to usage problem. Need to start with interoperability and grow from there, or change preceding paragraph to focus on usage not the stack.}
 %\joey{What are the problems? Could we introduce the ``Vs'' of metadata management: Discovery, Provenance, Attribution, Context ..., if we could articulate these clearly then we could perhaps translate their implications on administration, loss-of-value, risk to organization, ... }
 The first is poor productivity.
@@ -299,7 +301,7 @@ stemming from the absence of a system to track metadata
 is governance risk. 
 Data management necessarily entails tracking or controlling who accesses data, what they do with it, where they put it, and how it gets consumed downstream. 
 %In some cases this governance metadata is used to enforce policy (e.g.\ access control for Personally Identifiable Information); in others it is logged to support audits for compliance (e.g.\ in the Basel Committee on Banking Supervision). 
-In the absence of a standard place to store metadata and and answer these questions, it is impossible to enforce policies and/or audit behavior. 
+In the absence of a standard place to store metadata and answer these questions, it is impossible to enforce policies and/or audit behavior. 
 As a result, many administrators marginalize their Big Data stack as a playpen for non-critical data, and thereby inhibit both the adoption and the potential of new technologies.
 
 % In our diverse experiences in industry, the authors 
@@ -310,6 +312,7 @@ have seen the need for a common service layer to support the capture, publishing
 The effort in this paper began by addressing that need.
 
 \subsection{Opportunity: Data Context}
+\jmh{would be nice to weave agility in more aggressively}
 The lack of metadata services in the Big Data stack can be viewed as an opportunity:
 % is both a modern crisis
 % but also an 
@@ -361,7 +364,7 @@ between co-evolving versions.
 % across alternate versions, followed optionally by subsequent merges. 
 % While is common to track version history of code it is far less common to track the history of data despite the fact that it often evolves with code and user interaction. 
 % However 
-By tracking the version history of all objects spanning code, data, and entire analytics pipelines, we can simplify debugging and enable auditing and counter factual analysis.
+By tracking the version history of all objects spanning code, data, and entire analytics pipelines, we can simplify debugging and enable auditing and counterfactual analysis. % joey: counterfactual analysis is what in ML we call what-if analysis ... maybe we should just call it what-if analysis here?
 
 % is familiar in the world of code, but here, we want to track it for all kinds of data objects: code, atomic data items, and collections of data as well. 
 %\jmh{Novelties: versioning across both code and data, including singletons and collections.}
@@ -385,7 +388,7 @@ In the remainder of the paper we illustrate the opportunities in this space, des
 
 \section{Ground: Scenarios and Design}
 We are building an open-source data context service we call \emph{Ground}, to serve as a central model, API and repository for capturing the broad context in which data gets used. 
-Our goal is to address practical problems for the Big Data community in the short term and to open up opportunities for further research and innovation.
+Our goal is to address practical problems for the Big Data community in the short term and to open up opportunities for long-term research and innovation.
 
 % \jmh{can chop}
 % Data Context can assist with many goals in a multi-user, data-driven organization. For example, it can be used to assess end-to-end data quality validation for complex workflows; it can form the basis of experiment management and reproducibility; it can help smooth research-to-production data science lifecycles via sharing of code and data products; it can enable sensitive data to be tracked across programs and users in an organization; and it can be used to gather data and performance statistics that can be used by components to optimize their decisions. 
@@ -442,14 +445,14 @@ Based on security information in Ground, Preply warns Janet that certain custome
 Finally, to join the social media names against the customer names, Preply uses previous transformation scripts registered with Ground by other analysts to suggest standardized join keys to Janet.
 
 
-Having cleaned the data, Janet loads it into her BI charting tool and discovers a strong correlation between customer churn and social sentiment. 
+Having prepared the data, Janet loads it into her BI charting tool and discovers a strong correlation between customer churn and social sentiment. 
 Janet uses the ``share'' feature of the BI tool to send it to Sue; the tool records the share in Ground.
 
 
 Sue has been working on a machine learning pipeline for automated discount targeting. Janet's chart has useful features, so Sue consults Ground to find the input data.
 Sue joins Janet's dataset into her existing training data but discovers that her pipeline's prediction accuracy \emph{decreases}.  
 Examining Ground's schema for Janet's dataset, Sue realizes that the \kw{sentiment} column is categorical and needs to be pivoted into indicator columns \kw{isPositive}, \kw{isNegative}, and \kw{isNeutral}. 
-Sue writes a python script to transform Janet's data into a new file in the required format.
+Sue writes a Python script to transform Janet's data into a new file in the required format.
 She trains a new version of the targeting model and deploys it to send discount offers to customers at risk of leaving.
 % To ensure accurate future predictions, 
 Sue registers her training pipeline including Janet's social media feeds in the daily build; Ground is informed of the new code versions and service registration.
@@ -470,12 +473,12 @@ Sue calls a meeting with the relevant stakeholders to untangle the situation.
 
 
 Throughout our scenario, the users and their applications benefited from global data context. 
-Applications like Catly and Preply were able to provide innovative features by mining the ``tribal knowledge'' \emph{captured in Ground}:
+Applications like Catly and Preply were able to provide innovative features by mining the ``tribal knowledge'' captured in Ground:
 % \vikram{Should we call this something instead of tribal knowledge? Isn't the point sort of that the knowledge is no longer tribal?} \joey{did I fix your concern?}
 recommending datasets and code, identifying experts, flagging security concerns, notifying developers of changes, etc.
 The users were provided contextual awareness of both technical and organizational issues and able to interrogate global context to understand root causes. 
 % than is possible today. 
-Many of these features are possible to implement in isolation, but only work well with access to global context. 
+Many of these features exist in isolated applications today, but would work far better with global context. 
 Data context services make this possible, opening up opportunities for innovation, efficiency and better governance.
 
 
@@ -585,7 +588,7 @@ Data context services make this possible, opening up opportunities for innovatio
 In a decoupled architecture of multiple applications and backend services, context serves as a ``narrow waist''---a single point of access for the basic information about data and its usage. It is hard to anticipate the breadth of applications that could emerge.
 % However, the use of data context remains an open-ended design opportunity. 
 Hence we were keen in designing Ground to focus on initial decisions that could enable new services and applications in future. 
-To this end we were guided by Postel's Law of Robustness from Internet architecture: \emph{``Be conservative in what you do, be liberal in what you accept from others''.}  
+To this end we were guided by Postel's Law of Robustness from Internet architecture: \emph{``Be conservative in what you do, be liberal in what you accept from others.''}  % <- Using American ." style instead of British ". style.
 Guided by this philosophy, we identified four central design requirements for a successful data context service.
 
 \smallitem{Model-Agnostic.} For a data context service to be broadly adopted, it cannot impose opinions on metadata modeling. 
@@ -602,7 +605,7 @@ We explore this issue in Section~\ref{sec:metamodel}.
 
 \smallitem{Immutable.} Data context must be immutable; \emph{updating} stored context is tantamount to erasing history. %Indeed, Postel's Law essentially dictates that we never discard information, lest somebody ask for it. 
 There are multiple reasons why history is critical. 
-The latest context may not always be the most relevant: We may want to replay scenarios from the past for what-if analysis or debugging, or we may want to study how context information (e.g., success rate of a statistical model) changes over time.
+The latest context may not always be the most relevant: we may want to replay scenarios from the past for what-if analysis or debugging, or we may want to study how context information (e.g., success rate of a statistical model) changes over time.
 Prior context may also be important for governance and veracity purposes: we may be asked to audit historical behavior and metadata, or reproduce experimental results published in the past. 
 This simplifies record-keeping, but of course it raises significant engineering challenges.  
 %Mature storage solutions in the Big Data ecosystem do not support immutability and versioning natively. \vikram{I feel like a lot of peoples' first response to this is going to be "What about HDFS?" We may want to rephrase a little bit.} \jmh{Right. Need to address versioned data as well. More generally be careful about the bleed into data in the paper.}
@@ -618,7 +621,8 @@ We explore these issues in Section~\ref{sec:prototype} as well.
 % While not a design requirement per se, we note that any 
 Common narrow-waist service like data context must interoperate with a wide range of other services and systems designed and marketed by often competing vendors.
 % has to ``be Switzerland to be successful''.  
-Vendors and their customers will only adopt and support a central data context service if they feel no fear of lock-in; application writers will prioritize support for widely-used APIs to maximize the benefit of their efforts. 
+% Vendors and their 
+Customers will only adopt and support a central data context service if they feel no fear of lock-in; application writers will prioritize support for widely-used APIs to maximize the benefit of their efforts. 
 % Vendor-centric metadata and governance solutions in this space have traditionally raised concerns on those fronts; this is perhaps one reason why the traditional Master Data Management vendors have not been successful in the Big Data market. 
 It is important to note here that \emph{open source is not equivalent to political neutrality}; customers and developers have to believe that the project leadership has strong incentives to behave in the common interest. 
 % We return to this point in Section~\ref{sec:discussion}.
@@ -653,7 +657,7 @@ Ground's functionality is backed by five decoupled subservices.  For agility, we
 The main issue is to decouple the systems plumbing of ingest from an extensible set of metadata and feature extractors.
 To this end, ingest has both Underground and Aboveground APIs.
 New context metadata arrives for ingestion into Ground via an Underground queue API. 
-As metadata arrives, Ground publishes notifications via an Aboveground queue. ``Value-added'' Aboveground applications can subscribe to these events, fetch the associated metadata and data, and generate additional metadata asynchronously. 
+As metadata arrives, Ground publishes notifications via an Aboveground queue. Aboveground applications can subscribe to these events to add unique value, fetching the associated metadata and data, and generating enhanced metadata asynchronously. 
 For example, an application can subscribe for file crawl events, hand off the files to an entity extraction system like OpenCalais or DeepDive, and subsequently tag the corresponding Common Ground metadata objects with  the extracted entities.
 % Interactive insertion of metadata needs to be supported efficiently by the metadata storage component; batch insertion should make use of queueing services to handle bulk delivery and bursty arrivals.  
 % Passive insertion needs to be handled via a data crawler that can register metadata from external services with Ground, and see if 
@@ -665,7 +669,8 @@ Metadata feature extraction is an active research area; we hope that commodity A
 
 \smallitem{Versioned Metadata Storage}.  Ground must be able to efficiently store and retrieve metadata with the full richness of the Common Ground metamodel, including flexible version management of code and data, general-purpose model graphs and lineage storage. 
 % Ground also needs to reference external data and handle Schr\"{o}dinger versioning.  
-While none of the existing open source DBMSs is targeted at this data model, one can implement it in a shim layer above many of them. We discuss this at greater length in Section~\ref{sec:perf}, where we examine a range of open-source DBMSs. As noted there, we believe this is an area for significant database research.
+While none of the existing open source DBMSs target this data model, one can implement it in a shim layer above many of them. 
+We discuss this at greater length in Section~\ref{sec:perf}, where we examine a range of open-source DBMSs. As noted there, we believe this is an area for significant database research.
 
 % Note that Ground is not intended as the primary interface for accessing the data that is referenced by metadata; Ground is expected to \emph{describe} external data and track it, not serve it.  Hence Ground's most basic requirement for external data is to know how to store a unique ID for each item it tracks, and return that ID to applications that request it.  In an ideal setting, each external data item is versioned, hence each version has a unique ID.  However if the external item is mutable and not versioned, Ground generates \emph{Schr\"{o}dinger versions} lazily: each time we observe an object we assume it changes, and assign it a new version (and version ID).  
 % This is discussed in more detail in the Common Ground design~\cite{commonground}.
@@ -673,12 +678,13 @@ While none of the existing open source DBMSs is targeted at this data model, one
 % \textbf{MVP:} We are currently mapping our metadata model onto a traditional PostgreSQL relational database for storage.  Graphs can be represented as relations, so we manage versions, lineage and data modeling graphs at application level above the relational model.  PostgreSQL is a fairly mature system but is not designed to meet our requirements for latency, scalability and availability. In fact we do not expect any relational solution to work well for our needs over time, as relational databases are not designed for any of the three key individual aspects of the metamodel: versioned data, polyglot data models, or rich lineage.  Unfortunately, we do not expect that solutions in the NoSQL or graph database world will fare well either, though this requires research to validate. Therefore a critical thrust of the Ground research agenda is to understand the weaknesses of existing database systems when faced with these requirements, and design a new database system that is well-suited to emerging metadata workloads. \jmh{Need to call out research hypotheses more clearly.}
 
 
-\smallitem{Search and Analyze}.  Access to context information in Ground is expected to be complex and varied. As noted above, Common Ground supports arbitrary tags, which leads to a requirement for search-style indexing.
+\smallitem{Search and Analyze}.  Access to context information in Ground is expected to be complex and varied. As is noted later, Common Ground supports arbitrary tags, which leads to a requirement for search-style indexing.
 %; we plan to integrate Solr~\cite{solr} and ElasticSearch~\cite{elasticsearch}.  
 Second, intelligent applications like those in Section~\ref{sec:scenarios} will run significant analytical workloads over metadata---especially usage metadata which could be quite large.  
-Third, the underlying graphs in the Common Ground model will require support for basic graph queries like transitive closures. Finally, it seems natural that some workloads will need to combine these three classes of queries.
+Third, the underlying graphs in the Common Ground model require support for basic graph queries like transitive closures. 
+Finally, it seems natural that some workloads will need to combine these three classes of queries.
 %, perhaps via a federated query layer above them.  
-As we also explore in Section~\ref{sec:perf}, various open-source solutions can address these workloads at some level, but there is significant opportunity for research here.
+As we explore in Section~\ref{sec:perf}, various open-source solutions can address these workloads at some level, but there is significant opportunity for research here.
 
 % \textbf{MVP:} Initially we are not supporting search or analytic APIs; these will be added as the system evolves.  For interactive query, we can only do as well as our prototype relational metadata store.  For search, we expect that existing solutions like Solr will be sufficient for the foreseeable future; we do not expect metadata tagging and querying to exceed volumes that Solr sees in free-text indexing. For analytics, we intend to leverage Spark and GraphX as we have significant expertise in house.  However, the nature of the analytics to be done here represents a major research opportunity: what might be the value of metadata in a Big Data context, and how could that value be extracted by analytics?  Could a \emph{self-aware} Big Data ecosystem improve itself, or provide valuable insight about its usage to applications and users?  \jmh{Again, call out research.}  Finally, the requirements for a federated query layer and its design are a topic for investigation after we acquire a corpus of metadata and workloads.
 
@@ -825,15 +831,15 @@ Both {\version}s and {\gtag}s are themselves immutable.
 % To illustrate this philosophy, we have developed a somewhat richer metamodel
 % that can be imposed onto the aforementioned model.
 
-The \mantle level of Common Ground provides a model-agnostic metadata representation. 
+The \mantle level of Common Ground provides a model-agnostic representation of application metadata: the \emph{A} of our ABCs. 
 We use a graph model for flexibility: graphs can represent metadata entities and relationships from
 semistructured (JSON, XML) and structured (Relational, OO, matrix) data models. A simple graph model enables 
-``schema-on-use'' at the metadata level, allowing diverse metadata to be independently captured as ad hoc model graphs and 
+the agility of schema-on-use at the metadata level, allowing diverse metadata to be independently captured as ad hoc model graphs and 
 integrated as needed over time.
 
 The \mantle is based on an internal superclass called \thing, which is simply a unique ID and a \kw{VersionHistoryDAG}. Note that 
 an \thing is intrinsically immutable, but can capture change via its associated \kw{VersionHistoryDAG}: a fresh
-\version of the \thing is created whenever a tag is changed. 
+\version of the \thing is created whenever a \gtag is changed. 
 
 Ground's public API centers around three core object classes derived from \thing: {\node}, {\edge}, and {\graph}.
 Each of these subclasses has an associated subclass in the \core: \kw{NodeVersion}, \kw{EdgeVersion} and \kw{GraphVersion}. {\node}s and 
@@ -989,7 +995,7 @@ Whenever a Ground client uses the Aboveground API to access an a \kw{ExternalVer
 % In summary, the \mantle model provides a public, above-Ground interface for building application-specific 
 % abstractions by customizing the optional and structured tags of nodes and edges, and laying them out in versioned graphs. 
 
-\subsubsection{\Crust: Behavior}
+\subsubsection{{\Crust}s: Behavior}
 % \begin{figure}[ht]
 % \begin{scriptsize}
 % \begin{multicols}{2}
@@ -1034,7 +1040,7 @@ authorization, auditing and reproducibility.
 In Ground, lineage
 is captured as a relationship between two {\version}s. 
 This relationship is due to some process, either computational
-(a workflow) or manual (via some principal). \kw{LineageEdgeVersion}s (dark arrows in the top layer of Figure~\ref{fig:layers}) connect two or more (possibly differently-typed) {\version}s, one of which is a \kw{Workflow} or \kw{Principal} nodes. 
+(a workflow) or manual (via some principal). \kw{LineageEdgeVersion}s (purple arrows in the top layer of Figure~\ref{fig:layers}) connect two or more (possibly differently-typed) {\version}s, at least one of which is a \kw{Workflow} or \kw{Principal} node. 
 Note that \kw{LineageEdgeVersion} is not a subclass of \kw{EdgeVersion}; an \kw{EdgeVersion} can only connect two \kw{NodeVersion}s; a \kw{LineageEdge} can connect {\version}s from two different subclasses, including subclasses that are not under \kw{NodeVersion}.  
 For example, we might want to record that Sue imported \kw{nltk.py} in her \kw{churn.py} script; this is captured by a \kw{LineageEdge} between a \kw{PrincipalVersion} (representing Sue) and an \kw{EdgeVersion} (representing the dependency between the two files).  
 
@@ -1047,10 +1053,10 @@ For example, we might want to record that Sue imported \kw{nltk.py} in her \kw{c
 % % It definitely doesn't exist in the code. :-)}
 
 \subsubsection{Extension Libraries}
-The three layers of the Ground metamodel are intended to be very general-purpose and non-prescriptive.
-Hence, we expect Aboveground clients to define custom \kw{Structure}s to capture their application semantics.  
-These can be packaged under library {\node}s for sharing---e.g., a library for representing
-relational database catalogs, or scientific collaborations. \kw{StructureVersion}s allow these structures to be evolved over time in an identifiable manner.
+The three layers of the Ground metamodel are deliberately general-purpose and non-prescriptive.
+We expect Aboveground clients to define custom \kw{Structure}s to capture reusable application semantics.  
+These can be packaged under {\node}s representing shared libraries---e.g., a library for representing
+relational database catalogs, or scientific collaborations. \kw{StructureVersion}s allow these to be evolved over time in an identifiable manner.
 
 % The API for \groundwire is the subject of a separate document.
 
@@ -1084,9 +1090,9 @@ We are currently integrating ElasticSearch for text indexing and are still evalu
 
 To exercise our initial design and provide immediate functionality,
 % ``out of the box'', 
-we 
+we built
 % provide 
-support three sources of metadata most commonly used in the Big Data ecosystem: file metadata from HDFS, schemas from Hive, and code versioning from Git.
+support for three sources of metadata most commonly used in the Big Data ecosystem: file metadata from HDFS, schemas from Hive, and code versioning from Git.
 To support HDFS, we extended Gobblin to extract file system metadata from its HDFS crawls and publish them to Ground's Kafka connector. The resulting metadata is then ingested into Ground, and notifications are published on a Kafka channel for applications to respond to. To support Hive, we built an API shim that allows Ground to serve as a drop-in replacement for the Hive Metastore.
 One key benefit of using Ground as Hive's relational catalog is Ground's built-in support for versioning, which---combined with the append-only nature of HDFS---makes it possible to \emph{time travel} and view Hive tables as they appeared in the past.  To support Git, we have built crawlers to extract Git history graphs as \kw{ExternalVersion}s in Ground. These three scenarios guided our design for Common Ground.
 
@@ -1094,15 +1100,15 @@ Having initial validation of our metamodel on a breadth of scenarios, our next c
 
 \smallitem{Proactive Impact Analysis.} A common concern in managing operational data pipelines is to assess the effects of a code or schema change on downstream services.
 As a real-world model for this use case, we took the source code of Apache Hadoop and constructed a dependency graph of file imports that we register in Ground.
-We perform impact analysis by running transitive closure starting from 5,000 randomly chosen files, and measuring the time to retrieve every file version on which each depends.
+We perform impact analysis by running transitive closure starting from 5,000 randomly chosen files, and measuring the average time to retrieve the transitively dependent file versions.
 
-\smallitem{Dwell Time Analysis.} In the vein of the analysis Sue and Janet from Section~\ref{sec:scenarios}, our second use case involves an assessment of code versions on customer behavior. 
+\smallitem{Dwell Time Analysis.} In the vein of the analysis pipeline Sue manages in Section~\ref{sec:scenarios}, our second use case involves an assessment of code versions on customer behavior. 
 In this case, we study how user ``dwell time'' on a web page correlates with the version of the software that populates the page (e.g., personalized news stories). 
 We used a sizable real-world web log ({\small \url{http://waxy.org/2008/05/star_wars_kid_the_data_dump/}}) %~\cite{starwarskid}, 
 but had to simulate code versions for a content-selection pipeline. 
 To that end we wanted to use real version history from git; in the absence of content-selection code we used the Apache httpd web server repository. 
 Our experiment breaks the web log into sessions and artificially maps each session to a version of the software.
-We run 5,000 random queries choosing a session and looking up its associated software version.
+We run 5,000 random queries choosing a software version and looking up all of its associated sessions.
 \smallitembot
 
 While these use cases are less than realistic both in scale and in actual functionality, we felt they would provide simple feasibility results for more complex use cases.
@@ -1142,29 +1148,31 @@ The dwell time analysis amounts to retrieving all the sessions corresponding to 
 
 For the impact analysis experiment, we compared three PostgreSQL implementations. The first was a \kw{WITH RECURSIVE} query. 
 The second was a UDF written in PGPLSQL that computed the paths in a (semi-naïve) loop of increasing length. 
-The last was a fully-expanded 6-way self-join that computed the paths of the longest possible length. Figure~\ref{fig:postgres} compares the three results; surprisingly, the UDF loop was faster than the built-in solutions. Figure~\ref{fig:impact} shows that were unable to get Postgres within an order of magnitude of viable graph processing with even the fastest implementation.
+The last was a fully-expanded 6-way self-join that computed the paths of the longest possible length. Figure~\ref{fig:postgres} compares the three results; surprisingly, the UDF loop was faster than the native SQL solutions. 
+Figure~\ref{fig:impact} shows that we were unable to get PostgreSQL to be within an order of magnitude of the graph processing systems. 
+% with even the fastest implementation.
 
 \smallitem{Cassandra}. In Cassandra, every entity and relationship from the Common Ground model is represented as a key/value pair, indexed by key. 
 The Cassandra dwell time analysis query was identical to the Postgres query: a single table look-up which was aided by an index.
 % Cassandra can be integrated with an in-memory Java graph-processing library called JGraphT to answer the query. 
-Cassandra doesn't support recursive queries; for impact analysis, we wrapped Cassandra with JGraphT: an in-memory Java graph-processing library. We did not count the time taken to load the graph into JGraphT from Cassandra, hence Figure~\ref{fig:impact} shows a very optimistic view of Cassandra's performance for this query.
+Cassandra doesn't support recursive queries; for impact analysis, we wrapped Cassandra with JGraphT, an in-memory Java graph-processing library. We did not count the time taken to load the graph into JGraphT from Cassandra, hence Figure~\ref{fig:impact} shows a very optimistic view of Cassandra's performance for this query.
 
-\smallitem{Neo4j}. Neo4j is a native single-node graph database, so modeling the Common Ground graphs was straightforward.
-The Neo4j dwell time analysis was fast on average; the first few queries were markedly slow
-($\sim 10$ seconds),
-but subsequent queries were increasingly fast, presumably due to caching. 
+\smallitem{Neo4j}. Neo4j is a (single-node) graph database, so modeling the Common Ground graphs was straightforward.
+The average Neo4j dwell time analysis was fast; the first few queries were markedly slow
+(${\sim}10$ seconds),
+but subsequent queries were far faster, presumably due to caching. 
 % \jmh{We should discuss hot vs. cold performance in the experimental setup. Any effects for other systems?}
-Neo4j excelled in the transitive closure scenario, performing only 50\% slower than the Java in-memory implementation.
-With both queries, performance was significantly bolstered by indexing the \kw{NodeVersion} id that served as the starting point.
+Neo4j excelled on transitive closure, performing only 50\% slower than in-memory JGraphT.
+% With both queries, performance was significantly bolstered by indexing the \kw{NodeVersion} id that served as the starting point.
 
 \smallitem{TitanDB}. TitanDB is a scale-out graph database designed to run over a NoSQL database like Cassandra, which is how we deployed it in our experiments on a single machine. % \jmh{right?} 
 Once again, mapping our graph-based model into TitanDB was straightforward.
 TitanDB's dwell time analysis performance was significantly slower than the rest of the systems, despite indexing.
-The impact analysis query was significantly faster than any Postgres implementation but was still an order of magnitude slower than Neo4j and JGraphT.
+The impact analysis query was significantly faster than any Postgres implementation but was still an order of magnitude slower than Neo4j and JGraphT. 
 
 \smallitembot
 While there is variance in our simple dwell time analysis lookups, the bigger divergence is in the impact analysis workload.
-We can expect impact analysis to traverse a small subgraph within a massive job history. Queries on small subgraphs should be very fast---ideally as fast as an in-memory graph system~\cite{mcsherry2015scalability}. JGraphT-over-Cassandra and Neo4j provide a baseline, though neither solution scales beyond one node. PostgreSQL and TitanDB do not appear to be viable even for these modest queries.
+We can expect impact analysis to traverse a small subgraph within a massive job history. Queries on small subgraphs should be very fast---ideally as fast as an in-memory graph system~\cite{mcsherry2015scalability}. JGraphT-over-Cassandra and Neo4j provide a baseline, though neither solution scales beyond one node. PostgreSQL and TitanDB do not appear to be viable even for these modest queries. Of these systems, only Cassandra and TitanDB are designed to scale beyond a single node.
 
 % \section{Discussion}
 % \label{sec:discussion}
@@ -1183,13 +1191,14 @@ We can expect impact analysis to traverse a small subgraph within a massive job 
 \label{sec:relwork}
 % \joey{made a pass on this section and it looks good}
 Work related to this paper comes in a variety of categories. 
-For submission brevity, we focus on related system architectures and omit bibliography entries to systems easily found online.
+For submission brevity, we focus on related system architectures and omit bibliography entries to systems easily found online. 
+An accepted version will contain a more scholarly bibliography.
 
 
 % Legacy 
 Classic commercial Master Data Management and ETL solutions were not designed for 
 schema-on-use or agility. 
-Still, they influenced our thinking and many of their features should be directly supportable as a subset of the Ground functionality~\cite{loshin2010master}.
+Still, they influenced our thinking and many of their features should be supportable as a subset of the Ground functionality~\cite{loshin2010master}.
 % While this is unnatural in today's agile environments, it is interesting to consider what can be salvaged. 
 % % Can curation invariants be inferred rather than authored? 
 % % If they are ``soft'' invariants, how should software and organizations maintain them? 
@@ -1200,13 +1209,15 @@ Meanwhile,
 two emerging metadata systems address governance for Big Data: Cloudera Navigator and the Hortonworks-led Apache Atlas. 
 Both provide graph models that inspired the Common Ground \mantle; neither provides versioning or is perceived as vendor-neutral. % These systems are also exploring ``underground'' alternatives for storage.
 
-There is a broad space of efforts that help with data context. OpenChorus and IBM LabBook focus on collaboration and social data analysis.
-LinkedIn WhereHows, FINRA Herd and Google Goods are metadata services built to support data workflows in their respective organizations.
-% Alation, Tamr, Waterline
+There is a broad space of efforts that illustrate the possibilities of data context. 
+There are many applications and research projects for tasks like cataloging, wrangling, and lineage analysis. 
+OpenChorus and IBM LabBook provide portal-type applications for collaboration and social data analysis.
+LinkedIn WhereHows, FINRA Herd and Google Goods are metadata services built to support data workflows in their respective organizations; Goods bundles what we call Underground services with various proprietary services we might describe as Aboveground applications.
+% Alation, Tamr, Waterline,
 % ReproZip, Burrito
 % DeepDive, OpenCalais
 % VizTrails
-There is a wide variety of applications with particular context features: cataloging, wrangling, lineage analysis, etc. These all provide examples of what is possible with data context, via custom models that suit their needs. By contrast, Ground is focused on designing a reusable service to enable diverse applications and organizations to integrate their notions 
+All of the above make use of specific metamodels customized to their needs. By contrast, Ground is focused on designing a reusable service to enable diverse applications and organizations to integrate their notions 
 of data context. 
 This changes the challenges and opportunities we are pursuing, and hopefully will encourage broader adoption and innovation.
 
@@ -1220,7 +1231,7 @@ This changes the challenges and opportunities we are pursuing, and hopefully wil
 
 
 % Postgres, DataHub, Datomic Pachyderm, Noms
-Our initial assessment of storage engines suggests a need for more work: both a deeper evaluation of what exists and very likely designs for something new. There are many research papers and active workshops on graph databases~\cite{grades16}, but we found the leading systems (Neo4j, Titan) lacking. 
+Our initial assessment of storage engines suggests a need for more work: both a deeper evaluation of what exists and very likely designs for something new. There are many research papers and active workshops on graph databases (e.g., \cite{grades16}), but we found the leading systems (Neo4j, Titan) lacking. 
 % \joey{should we breifly say how?}\jmh{Implicit in perf section. space is very short.} \joey{fair}
 Interest in no-overwrite databases has only recently reemerged, including the DataHub research project, and the Datomic, Pachyderm and Noms systems.  The combination of these two kinds of functionality 
 appears to be a new challenge.
