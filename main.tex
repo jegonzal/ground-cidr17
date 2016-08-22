@@ -45,6 +45,7 @@
 \newcommand{\version}{\kw{Version}\xspace}
 \newcommand{\richversion}{\kw{RichVersion}\xspace}
 \newcommand{\thing}{\kw{Item}\xspace}
+\newcommand{\GroundItem}{\kw{Item}\xspace}
 \newcommand{\node}{\kw{Node}\xspace}
 \newcommand{\edge}{\kw{Edge}\xspace}
 \newcommand{\structure}{\kw{Structure}\xspace}
@@ -182,9 +183,12 @@ was scarce and concentrated in a handful of computing and consulting firms.
 
 Two conservative design patterns emerged that lasted many decades. First, the accepted best practices
 for deploying databases revolved around tight control of schemas and data ingest, in support of 
-general-purpose accounting and compliance use cases. Typical advice from data
-warehousing leaders held that ``There is no point in 
-bringing data \ldots into the data warehouse environment without integrating it.''\cite{inmon05} Second, 
+general-purpose accounting and compliance use cases. 
+Typical advice from data
+warehousing leaders held that 
+\emph{``There is no point in 
+bringing data $\ldots$ into the data warehouse environment without integrating it.''}~\cite{inmon2005building} 
+Second, 
 the data management systems designed for these users were often built by a single vendor and deployed as a
 monolithic stack spanning data ingest, storage, retrieval, and governance.
 % regardless of how well-factored they were under the covers. %\msd{Although} 
@@ -1027,7 +1031,7 @@ relational database catalogs, or scientific collaborations, or the models of a t
 %%%%%%%%%%%
 
 
-\section{Ground \MakeLowercase{v}0}
+\section{Ground \lowercase{v}0}
 \label{sec:prototype}
 % \vikram{I used prototype here as a placeholder, but I don't think we should call it that. Prototype sort of sounds like we built a thing and we're going to throw it away, whereas in reality, we have code that we're going to release as an Alpha in the next 2 months.}
 
@@ -1054,6 +1058,8 @@ We are currently integrating ElasticSearch for text indexing, and are still eval
 
 
 \subsection{Initial Experiences}
+\label{sec:perf}
+
 To exercise our initial design and provide useful functionality ``out of the box'', we provide support for three sources of metadata most commonly used in the Big Data ecosystem: file metadata from HDFS, schemas from Hive, and code versioning from Git.
 To support HDFS, we extended Gobblin to extract file system metadata from its HDFS crawls, and publish them to Ground's Kafka connector. The resulting metadata is then ingested into Ground, and notifications are published on a Kafka channel for applications to respond to. To support Hive, we built an API shim that allows Ground to serve as a drop-in replacement for Hive Metastore.
 One key benefit of using Ground as Hive's relational catalog is Ground's built-in support for versioning, which---combined with the append-only nature of HDFS---makes it possible to ``time travel'' and view Hive tables as they appeared in the past.  To support Git, we have built crawlers to extract Git history graphs as \kw{ExternalVersion}s in Ground. These three scenarios guided our design for Common Ground.
@@ -1066,15 +1072,20 @@ that we register in Ground.
 We perform impact analysis by running transitive closure starting from a particular version of a file and retrieving every other file version on which it depends.
 
 \smallitem{Dwell Time Analysis.} In the vein of the analysis Sue and Janet were doing in Section 2, our second use case involves
-a standard assessment of code versions on customer behavior. In this case, we study how user ``dwell time'' on a web page correlates with the version of the software that populates the page (e.g. with news stories). We were able to get access to sizable real-world weblogs (the ``Star Wars Kid'' corpus), but had to simulate versions of a content-selection pipeline. To that end we took version history from the git logs of the Apache httpd web server.  Our experiment breaks the Star Wars Kid web log into sessions, and maps each session to a version of the software.
+a standard assessment of code versions on customer behavior. In this case, we study how user ``dwell time'' on a web page correlates with the version of the software that populates the page (e.g. with news stories). We were able to get access to sizable real-world weblogs~\cite{starwarskid}, but had to simulate versions of a content-selection pipeline. To that end we took version history from the git logs of the Apache httpd web server.  Our experiment breaks the Star Wars Kid web log into sessions, and maps each session to a version of the software.
 We then join each session with information on the software version it used, in order to enable dwell-time analysis. 
 \\
 
-While both these use cases are toy examples, both in scale and in actual functionality, we believe that they are accurate stand-ins for the larger and more ``real world'' use cases described. 
-These use cases were the basis of our initial benchmarks.
+While both these use cases are less than realistic both in scale and in actual functionality, we felt they could provide simple lower-bound
+results for more complex use cases.
 
-\subsection{Initial Results}
-\label{sec:perf}
+To evaluate the state of off-the-shelf open source, we chose leading examples of relational, NoSQL, and graph databases.
+All benchmarks were run on a single Amazon EC2 \kw{m4.xlarge} machine with 4 CPUs and 16GB of RAM. 
+Our initial goal here was more experiential than quantitative---we wanted to see if we could easily get these systems to 
+perform adequately for our use cases, and if not to call more attention to the needs of a system like Ground.
+We acknowledge that with further tuning, these systems might perform better than they did in our experiments, though we feel 
+these experiments
+are rather fundamental and should not require intensive tuning.
 
 \begin{figure}
 \centering
@@ -1082,13 +1093,13 @@ These use cases were the basis of our initial benchmarks.
   \centering
   \includegraphics[width=\linewidth]{adjacent.png}
   \caption{Dwell time analysis.}
-  \label{fig:fig1}
+  \label{fig:dwell}
 \end{minipage}%
 \begin{minipage}{.5\linewidth}
   \centering
   \includegraphics[width=\linewidth]{trans_closure.png}
   \caption{Impact analysis.}
-  \label{fig:fig2}
+  \label{fig:impact}
   \end{minipage}
 \end{figure}
 
@@ -1100,32 +1111,36 @@ The third graph goes here.
 \label{fig:fig3}
 \end{figure}
 
-\smallitem{Postgres.} The Postgres adjacency retrieval is a single-table look-up that is optimized with an index. 
+\smallitem{PostgreSQL.} We normalize the Common Ground entities 
+(\thing, \version, etc.) into tables, and the relationships
+(e.g., \kw{EdgeVersion}) as their own binary tables with indexes on both sides. 
+\jmh{What is ``adjacency retrieval''? This next sentence worries me.}
+Hence adjacency retrieval is a single-table look-up that is optimized with an index. 
 The performance results here are expected and not noteworthy.
 
-With the transitive closure query, we compared three different implementations. The first was a recursive query using the \kw{with} syntax. 
-The second was a UDF written in PGPSQL that iteratively and semi-naïvely computed the paths that we were interested in. 
-The last was a fully unrolled multi-table query that manually computed the paths of the longest possible length. From  the results, it is evident Postgres has a serious problem with graph processing.
+For the dwell time experiment, we compared three different implementations in PostgreSQL. The first was a recursive query using the \kw{with} syntax. 
+The second was a UDF written in PGPLSQL that iteratively (semi-naïvely) computed the paths that we were interested in. 
+The last was a fully unrolled \jmh{8-way?} self-join that manually computed the paths of the longest possible length. Figure~\ref{fig:impact} shows that were unable to get Postgres within an order of magnitude of viable graph processing. \jmh{are you planning to plot all 3?}
 
-\smallitem{Cassandra.} The Cassandra adjacency retrieval query was identical to the Postgres query: A single table look-up which was aided by an index.
-The transitive closure was our pseudo-baseline. Instead of executing the query in Cassandra, we loaded the whole graph into memory and used the Java graph-processing library JGraphT to answer the query.
+\smallitem{Cassandra.} In Cassandra, every entity and relationship from the Common Ground model is represented as a key/value pair, indexed
+by key.
+The Cassandra adjacency retrieval query was identical to the Postgres query: A single table look-up which was aided by an index.
+Cassandra can be integrated with an in-memory Java graph-processing library called JGraphT to answer the query. To give Cassandra every advantage we utilized JGraphT; Figure~\ref{fig:impact} shows this providing a baseline for what's possible using off-the-shelf open source for this simple graph query.
 
-\smallitem{Neo4j} The Neo4j adjacency query was markedly slow for the first few queries 
+
+\smallitem{Neo4j} Neo4j is a native single-node graph database, so we modeled the graphs in Common Ground in a straightforward manner.
+The Neo4j adjacency query was markedly slow for the first few queries 
 ($\sim 10$ seconds), 
 % (\kw{O(10 seconds)}), 
 but subsequent queries became increasingly fast, presumably as data was cached in memory. 
-Neo4j excelled in the transitive closure scenario, performing as fast as the Java in-memory implementation. 
+Neo4j excelled in the transitive closure scenario, performing as fast as the Java in-memory implementation. \jmh{That's not what the graph shows!}
 With both queries, performance was significantly bolstered by indexing the NodeVersion id that served as the starting point.
 
-\smallitem{TitanDB.} TitanDB's adjacent query performance was ... \joey{finish this!}
+\smallitem{TitanDB.} TitanDB is a scale-out graph databases designed to run over a NoSQL database like Cassandra, which is how we deployed it in our experiments. \jmh{True?} TitanDB's adjacent query performance was ... \joey{finish this!}
 The transitive closure query performed an order of magnitude slower than the Java in-memory and Neo4j implementations but was still significantly faster than any Postgres implementation.
 
 \smallitembot
 
-All benchmarks were run on a single Amazon EC2 \kw{m4.xlarge} machines with 4 CPUs and 16GB of RAM. 
-These benchmarks were not meant to be exhaustive or representative of the performance of all graph processing systems. 
-Rather, they represent initial evaluation of commonly used systems (i.e., ``state of play'') under simple versions of our workloads.
-We acknowledge that with further tuning, these systems might perform better than they did in our experiments.
 
 % \section{Discussion}
 % \label{sec:discussion}
