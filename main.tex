@@ -227,7 +227,7 @@ Our goal is to address practical problems for the Big Data community in the shor
 % \jmh{can chop}
 % Data Context can assist with many goals in a multi-user, data-driven organization. For example, it can be used to assess end-to-end data quality validation for complex workflows; it can form the basis of experiment management and reproducibility; it can help smooth research-to-production data science lifecycles via sharing of code and data products; it can enable sensitive data to be tracked across programs and users in an organization; and it can be used to gather data and performance statistics that can be used by components to optimize their decisions. 
 
-To illustrate the potential of the Ground data context service, we describe we describe two concrete scenarios in which Ground
+To illustrate the potential of the Ground data context service, we describe two concrete scenarios in which Ground
 can aid in data discovery, facilitate better collaboration, protect confidentiality, help diagnose problems, and ultimately enable new value to be captured from existing data.
 After presenting the scenario, we explore the design requirements for a data context service.
 
@@ -284,6 +284,37 @@ The users were provided contextual awareness of both technical and organizationa
 % than is possible today. 
 Many of these features exist in isolated applications today, but would work far better with global context. 
 Data context services make this possible, opening up opportunities for innovation, efficiency and better governance.
+
+\subsection{Scenario: Big Data in Enterprise IT}
+The previous scenario focuses on a relatively technical setting. Many organizations are not so technical. In fact, we received feedback on a draft of this paper from an IT executive at a financial services firm (not affiliated with the authors), who remarked that he would characterize both Janet and Sue as ``developers'' not analysts (``if she knows what JSON is, she's a developer!''). From his perspective, such developers represent less than 10\% of the data users in his organization. The remaining 90\% interact with graphical interfaces to data that generate SQL in the background. However, he also commented that the needs for data context are critical to managing his organization as well. To illustrate that point, we present a typical scenario from an enterprise IT organization shifting to Big Data technology.
+
+Mark is in charge of data governance for a multinational financial institution. He is responsible for managing a legacy central data warehouse, and the legacy systems that support it, including Extract-Transform-Load (ETL) mappings for loading operational databases into the warehouse, and Master Data Management (MDM) systems for governing the ``golden master'' of various reference data sets (customers, partner organizations, and so on.) Recently the organization has decided to migrate off of these systems and onto a Big Data stack, to accomodate larger data volumes and varieties.
+
+\emph{Based on input from Marty. Add some aboveground Ground magic in each scenario as we did in the previous.}
+\begin{itemize}
+	\item \textbf{Documentation and Profiling}. Jerry the Analyst: ``I ran this report. What is this field? What area the standard values? Is my stuff normal or abnormal?'' (This is the most popular question Marty gets.) Ground keeps historical materialized views of data profiles---summary statistics---over the data, which can be called up by a visual tool for comparison against current data.
+	\item \textbf{Logical Modeling}. Jerry's ``user'' Sandra in the LOB:``what does this mean''? Data dictionary. 23 variations of field names and aliases, but one business definition. Need an enterprise data model that maps to the physical fields.  (Second most popular question). These mappings can be stored in Ground as lineage data...
+	\item \textbf{Transitivity of Business Definitions}: Sandra the Data Curator. Suppose it’s a really important master reference file. 1000 fields. He assigns business definitions to it.
+	\begin{itemize}
+		\item Can he store this? Yes.
+		\item He can then \emph{auto-assign} business definitions from that point---data lineage does the trick for business definitions.  \textbf{This is a nice simple example of transitive closure through views.} Can decide on rules for transitivity (e.g. ok traverse through uppercase, string-trim, move decimal point, etc.)  A logical link! Physical link is at master file level.  Wants changes to dictionary to be propagated logically!
+		\item Accurate lineage at field level is the cornerstone of the whole thing! Open API to support this is interesting, but if the developers don’t support field-level stuff, you lose.  Weak link in story is developers have to write “connectors”.  
+		\begin{itemize}
+			\item would like constraints
+			\item Would like auto-generation of connectors. He has vendors saying they can do this for random Java. (cite Alvin's auto-pipe stuff?)
+		\end{itemize}
+	\end{itemize}
+	\item \textbf{Instrumentation of New Systems}. Rita the Developer: In previous scenario, how does ground know about the scenario? How does Ground know about the new script? Clarify how git and file parsing etc fit together — maybe explain the git code.
+	\item \textbf{Lineage from many systems:} suppose he wants Rita the Developer to add Spark-Kafka-HDFS pipeline. Will it capture lineage if the devs follow Ground rules? At what granularity? Want cell-level.
+\end{itemize}
+
+Instances of global data context: 
+\begin{itemize}
+	\item Data profiles: not only for base data, but for standard reporting data products.
+	\item Data ``dictionaries'' and mappings
+	\item APIs for field-level data lineage from code
+	\item Transitive closure queries over cross-system lineage.
+\end{itemize}
 
 \subsection{Design Requirements}
 
