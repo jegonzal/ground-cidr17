@@ -32,7 +32,7 @@ showtabs=false,                 % show tabs within strings adding particular und
 frame=leftline,
 tabsize=2,  		% sets default tabsize to 2 spaces
 captionpos=b,   		% sets the caption-position to bottom
-breaklines=false,    	% sets automatic line breaking
+breaklines=true,    	% sets automatic line breaking
 breakatwhitespace=true,    % sets if automatic breaks should only happen at whitespace
 columns=fixed,
 basewidth=0.52em,
@@ -448,7 +448,7 @@ This is currently under design, but the ability to work with multiple schedulers
 \lstinputlisting{groundapi.java}
 \end{multicols}
 \end{scriptsize}
-\caption{Common Ground Java Classes}
+\caption{Member variables for Common Ground Java classes. Methods for the classes have been elided. Full code is available at \texttt{https://github.com/ground-context/ground}.}
 \label{fig:java}
 \end{figure*}
 
@@ -456,7 +456,7 @@ This is currently under design, but the ability to work with multiple schedulers
 \label{sec:metamodel}
 % \jmh{Pull in the practical motivation for each layer from the GDocs outline.}
 Ground is designed to manage both the ABCs of data context and the design requirements of data context services.
-The Common Ground metamodel is based on a layered graph structure shown in Figure~\ref{fig:layers}: one layer for each of the ABCs of data context.
+The Common Ground metamodel is based on a layered graph structure shown in Figure~\ref{fig:layers}: one layer for each of the ABCs of data context. Skeletons of Java classes from the Ground codebase are shown in Figure~\ref{fig:java}.
 
 \subsubsection{{\VersionGraph}s: Representing Change}
 % \begin{figure}[ht]

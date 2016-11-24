@@ -1,34 +1,22 @@
-// Java class definitions go here!
-
-// What's here now is just a sample ... Vikram to fill in
-
+// VERSION GRAPHS
 public class Item<T extends Version> {
-
     private String id;
-
-    protected Item(String id) {
-        this.id = id;
-    }
-
-    @JsonProperty
-    public String getId() {
-        return this.id;
-    }
-
 }
 
 
 public class Version {
     private String id;
+}
 
-    protected Version(@JsonProperty String id) {
-        this.id = id;
-    }
+public class VersionSuccessor<T extends Version> {
+    // the unique id of this VersionSuccessor
+    private String id;
 
-    @JsonProperty
-    public String getId() {
-        return this.id;
-    }
+    // the id of the Version that originates this successor
+    private String fromId;
+
+    // the id of the Version that this success points to
+    private String toId;
 }
 
 
@@ -41,78 +29,118 @@ public class VersionHistoryDAG<T extends Version> {
 
     // map of parents to children
     private Map<String, List<String>> parentChildMap;
+}
 
-    protected VersionHistoryDAG(String itemId, List<VersionSuccessor<T>> edges) {
-        this.itemId = itemId;
-        this.edgeIds = new ArrayList<>();
-        this.parentChildMap = new HashMap<>();
 
-        for (VersionSuccessor<T> edge : edges) {
-            edgeIds.add(edge.getId());
+public class RichVersion extends Version {
+    // the map of Keys to Tags associated with this RichVersion
+    private Map<String, Tag> tags;
 
-            this.addToParentChildMap(edge.getFromId(), edge.getToId());
-        }
-    }
+    @UnwrapValidatedValue
+    // the StructureVersion associated with this RichVersion
+    private String structureVersionId;
 
-    @JsonProperty
-    public String getItemId() {
-        return this.itemId;
-    }
+    @UnwrapValidatedValue
+    // the optional reference associated with this RichVersion
+    private String reference;
 
-    @JsonProperty
-    public List<String> getEdgeIds() {
-        return this.edgeIds;
-    }
+    @UnwrapValidatedValue
+    // the optional parameters associated with this RichVersion if there is a reference
+    private Map<String, String> parameters;
+}
 
-    /**
-     * Checks if a given ID is in the DAG.
-     *
-     * @param id the ID to be checked
-     * @return true if id is in the DAG, false otherwise
-     */
-    public boolean checkItemInDag(String id) {
-        return this.parentChildMap.keySet().contains(id) || this.getLeaves().contains(id);
-    }
+public class NodeVersion extends RichVersion {
+    private static final Logger LOGGER = LoggerFactory.getLogger(NodeVersion.class);
 
-    /**
-     * Adds an edge to this DAG.
-     *
-     * @param parentId the id of the "from" of the edge
-     * @param childId the id of the "to" of the edge
-     * @throws GroundException
-     */
-    public void addEdge(String parentId, String childId, String successorId) {
-        edgeIds.add(successorId);
-        this.addToParentChildMap(parentId, childId);
-    }
+    // the id of the Node containing this Version
+    private String nodeId;
+}
 
-    /**
-     * Returns the leaves of the DAG (i.e., any version id that is not a parent of another version id).
-     *
-     * @return the list of the IDs of the leaves of this DAG
-     */
-    public List<String> getLeaves() {
-        List<String> leaves = new ArrayList<>();
-        for (List<String> values : parentChildMap.values()) {
-            leaves.addAll(values);
-        }
+public class EdgeVersion extends RichVersion {
+    // the id of the Edge containing this Version
+    private String edgeId;
 
-        leaves.removeAll(this.parentChildMap.keySet());
+    // the id of the NodeVersion that this EdgeVersion originates from
+    private String fromId;
 
-        Set<String> leafSet = new HashSet<>(leaves);
-        List<String> result = new ArrayList<>();
-        result.addAll(leafSet);
+    // the id of the NodeVersion that this EdgeVersion points to
+    private String toId;
+}
 
-        return result;
-    }
+public class StructureVersion extends Version {
+    // the id of the Structure containing this Version
+    private String structureId;
 
-    private void addToParentChildMap(String parent, String child) {
-        List<String> childList = this.parentChildMap.get(parent);
-        if (childList == null) {
-            childList = new ArrayList<>();
-        }
+    // the map of attribute names to types
+    private Map<String, GroundType> attributes;
+}
 
-        childList.add(child);
-        this.parentChildMap.put(parent, childList);
-    }
+public class GraphVersion extends RichVersion {
+    private static final Logger LOGGER = LoggerFactory.getLogger(GraphVersion.class);
+
+    // the id of the Graph that contains this Version
+    private String graphId;
+
+    // the list of ids of EdgeVersions in this GraphVersion
+    private List<String> edgeVersionIds;
+}
+
+// MODEL GRAPHS
+public class Node extends Item<NodeVersion> {
+    private static final Logger LOGGER = LoggerFactory.getLogger(Node.class);
+
+    // the name of this Node
+    private String name;
+}
+
+public class Edge extends Item<EdgeVersion> {
+    // the name of this Edge
+    private String name;
+}
+
+public class Graph extends Item<GraphVersion> {
+    // the name of this Graph
+    private String name;
+}
+
+public class Structure extends Item<StructureVersion> {
+    // the name of this Structure
+    private String name;
+}
+
+public class Tag {
+    private String versionId;
+
+    @NotEmpty
+    // the Key of the Tag
+    private String key;
+
+    @UnwrapValidatedValue
+    // the optional Value of the Tag
+    private Object value;
+
+    @UnwrapValidatedValue
+    // the Type of the Value if it exists
+    private GroundType valueType;
+}
+
+// USAGE GRAPHS
+public class LineageEdge extends Item<LineageEdgeVersion> {
+    private static final Logger LOGGER = LoggerFactory.getLogger(LineageEdge.class);
+
+    // the name of this LineageEdge
+    private String name;
+}
+
+public class LineageEdgeVersion extends RichVersion {
+    private static final Logger LOGGER = LoggerFactory.getLogger(LineageEdgeVersion.class);
+
+    // the id of the LineageEdge containing this Version
+    private String lineageEdgeId;
+
+    // the id of the RichVersion that this LineageEdgeVersion originates from
+    private String fromId;
+
+    // the id of the RichVersion that this LineageEdgeVersion points to
+    private String toId;
 }
