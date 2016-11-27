@@ -1,0 +1,48 @@
+public class Version {
+    private String id;
+}
+
+public class VersionSuccessor<T extends Version> {
+    // the unique id of this VersionSuccessor
+    private String id;
+    // the id of the Version that originates this successor
+    private String fromId;
+    // the id of the Version that this success points to
+    private String toId;
+}
+
+public class VersionHistoryDAG<T extends Version> {
+    // the id of the Version that's at the rootId of this DAG
+    private String itemId;
+    // list of VersionSuccessors that make up this DAG
+    private List<String> edgeIds;
+    // map of parents to children
+    private Map<String, List<String>> parentChildMap;
+}
+
+public class RichVersion extends Version {
+    // the map of Keys to Tags associated with this RichVersion
+    private Map<String, Tag> tags;
+    @UnwrapValidatedValue
+    // the StructureVersion associated with this RichVersion
+    private String structureVersionId;
+    @UnwrapValidatedValue
+    // the optional reference associated with this RichVersion
+    private String reference;
+    @UnwrapValidatedValue
+    // the optional parameters associated with this RichVersion if there is a reference
+    private Map<String, String> parameters;
+}
+
+public class Tag {
+    private String versionId;
+    @NotEmpty
+    // the Key of the Tag
+    private String key;
+    @UnwrapValidatedValue
+    // the optional Value of the Tag
+    private Object value;
+    @UnwrapValidatedValue
+    // the Type of the Value if it exists
+    private GroundType valueType;
+}

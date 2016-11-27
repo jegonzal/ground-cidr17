@@ -11,6 +11,7 @@
 \usepackage{hyperref}
 \usepackage{caption}
 \usepackage{subcaption}
+\usepackage{float}
 
 \usepackage[protrusion=true,expansion=true]{microtype}
 \setlength{\emergencystretch}{3em}
@@ -72,7 +73,7 @@ escapeinside={(*}{*)}
 
 \newcommand{\version}{\kw{Version}\xspace}
 \newcommand{\richversion}{\kw{RichVersion}\xspace}
-\newcommand{\thing}{\kw{Item}\xspace}
+\newcommand{\itemground}{\kw{Item}\xspace}
 \newcommand{\GroundItem}{\kw{Item}\xspace}
 \newcommand{\node}{\kw{Node}\xspace}
 \newcommand{\edge}{\kw{Edge}\xspace}
@@ -328,6 +329,14 @@ In this scenario, both the IT and business users benefit from various kinds of c
 
 \section{Design and Architecture}
 \label{sec:arch}
+\begin{figure*}[th]
+\centering
+\includegraphics[width=0.75\linewidth]{groundarch.pdf}
+\caption{The initial architecture of Ground.}
+\label{fig:arch}
+\end{figure*}
+% \jmh{\textbf{Idea 3: A Pragmatic example in existing Hadoop workflows.  LinkedIn or Navigator customer story?}  Maybe take Idea 1 and make it less about assistive features, more about lost lineage across HDFS, Trifacta, Hive and Tableau?}
+
 In a decoupled architecture of multiple applications and backend services, context serves as a ``narrow waist''---a single point of access for the basic information about data and its usage. It is hard to anticipate the breadth of applications that could emerge.
 % However, the use of data context remains an open-ended design opportunity. 
 Hence we were keen in designing Ground to focus on initial decisions that could enable new services and applications in future. 
@@ -362,14 +371,6 @@ We explore these issues in Section~\ref{sec:prototype} as well.
 Common narrow-waist service like data context must interoperate with a wide range of other services and systems designed and marketed by often competing vendors.
 Customers will only adopt and support a central data context service if they feel no fear of lock-in; application writers will prioritize support for widely-used APIs to maximize the benefit of their efforts. 
 It is important to note here that open source is not equivalent to political neutrality; customers and developers have to believe that the project leadership has strong incentives to behave in the common interest. 
-
-\begin{figure*}[th]
-\centering
-\includegraphics[width=0.75\linewidth]{groundarch.pdf}
-\caption{The initial architecture of Ground.}
-\label{fig:arch}
-\end{figure*}
-% \jmh{\textbf{Idea 3: A Pragmatic example in existing Hadoop workflows.  LinkedIn or Navigator customer story?}  Maybe take Idea 1 and make it less about assistive features, more about lost lineage across HDFS, Trifacta, Hive and Tableau?}
 
 \vspace{1em}
 Based on the requirements above, the Ground architecture is informed by Postel's Law of Robustness and the design pattern of decoupled components. 
@@ -420,17 +421,11 @@ However, we do not expect Ground to be a universal provider of workflow executio
 This is currently under design, but the ability to work with multiple schedulers has become fairly common in the open source Big Data stack, so this may be a straightforward issue.
 
 \smallitembot
-% \begin{figure*}[th]
-% \center
-% \includegraphics[width=0.7\linewidth]{groundarch.pdf}
-% \end{figure*}
 
-% \subsection{Common Ground: A Metamodel}
-% \label{sec:metamodel}
-% \subsection{Underground Services}
+\subsection{The Common Ground Metamodel}
+\label{sec:metamodel}
 
-
-\begin{figure}[t]
+\begin{figure}[th]
 \centering
 \includegraphics[width=\linewidth]{layers.pdf}
 \caption{The Common Ground metamodel.} 
@@ -442,35 +437,13 @@ This is currently under design, but the ability to work with multiple schedulers
 \label{fig:layers}
 \end{figure}
 
-\begin{figure*}[t]
-\begin{scriptsize}
-\begin{multicols}{2}
-\lstinputlisting{groundapi.java}
-\end{multicols}
-\end{scriptsize}
-\caption{Member variables for Common Ground Java classes. Methods for the classes have been elided. Full code is available at \texttt{https://github.com/ground-context/ground}.}
-\label{fig:java}
-\end{figure*}
-
-\subsection{The Common Ground Metamodel}
-\label{sec:metamodel}
 % \jmh{Pull in the practical motivation for each layer from the GDocs outline.}
 Ground is designed to manage both the ABCs of data context and the design requirements of data context services.
-The Common Ground metamodel is based on a layered graph structure shown in Figure~\ref{fig:layers}: one layer for each of the ABCs of data context. Skeletons of Java classes from the Ground codebase are shown in Figure~\ref{fig:java}.
+The Common Ground metamodel is based on a layered graph structure shown in Figure~\ref{fig:layers}: one layer for each of the ABCs of data context.
 
 \subsubsection{{\VersionGraph}s: Representing Change}
-% \begin{figure}[ht]
-% \begin{scriptsize}
-% \begin{multicols}{2}
-% % \lstinputlisting{scala/core.scala.txt}
-% \end{multicols}
-% \end{scriptsize}
-% \caption{\VersionGraph metamodel in Scala.}
-% \label{fig:core}
-% \end{figure}
-% \vikram{Rewrote this section and flipped the order of definitions to avoid redundancy.}
 
-We begin with the \versiongraph layer of Common Ground, which captures changes corresponding to the \emph{C} in the ABCs of data context. 
+We begin with the \versiongraph layer of Common Ground, which captures changes corresponding to the \emph{C} in the ABCs of data context (Figure~\ref{fig:versioncode}).
 This layer bootstraps the representation of all information in Ground, by providing the classes upon which all other layers are based. These classes and their subclasses are the only information in Common Ground that is not itself versioned; this is why it forms the base of the metamodel.
 
 The main atom of our metamodel is the \version, which is simply a globally unique identifier; it represents an immutable version of some object; we
@@ -480,22 +453,10 @@ indicating that one version is the descendant of another (the short dark edges i
 Type parametrization ensures that all of the \kw{VersionSuccessor}s in a given DAG link the same subclass of {\version}s together.
 This representation of DAGs captures any partial order, and is general enough to reflect multiple different versioning systems.
 
-To allow customization, the \versiongraph allows \version objects to be associated with
-ad hoc {\gtag}s (key-value pairs) upon creation.
-Both {\version}s and {\gtag}s are themselves immutable.
+\kw{RichVersion}s support customization. These variants of \version{}s can be associated with
+ad hoc {\gtag}s (key-value pairs) upon creation. Note that all of the classes introduced above are immutable---new values require the creation of new \version{}s.
 
 \subsubsection{{\ModelGraph}s: Application Context}
-
-% \begin{figure}[ht]
-% \begin{scriptsize}
-% \begin{multicols}{2}
-% % \lstinputlisting{scala/mantle.scala.txt}
-% \end{multicols}
-% \end{scriptsize}
-% \caption{\ModelGraph metamodel in Scala.}
-% \label{fig:mantle}
-% \end{figure}
-
 % Our philosophy is that the metamodel should be designed in layers for
 % simplicity and elegance. \versiongraph classes are shared and evolve in infrequent,
 % regimented updates to maximize backwards compatibility. More detailed versions
@@ -507,26 +468,41 @@ Both {\version}s and {\gtag}s are themselves immutable.
 % To illustrate this philosophy, we have developed a somewhat richer metamodel
 % that can be imposed onto the aforementioned model.
 
-The \modelgraph level of Common Ground provides a model-agnostic representation of application metadata: the \emph{A} of our ABCs. 
+The \modelgraph level of Common Ground provides a model-agnostic representation of application metadata: the \emph{A} of our ABCs (Figure~\ref{fig:modelcode}.) 
 We use a graph model for flexibility: graphs can represent metadata entities and relationships from
 semistructured (JSON, XML) and structured (Relational, OO, matrix) data models. A simple graph model enables 
 the agility of schema-on-use at the metadata level, allowing diverse metadata to be independently captured as ad hoc model graphs and 
 integrated as needed over time.
 
-The \modelgraph is based on an internal superclass called \thing, which is simply a unique ID and a \kw{VersionHistoryDAG}. Note that 
-an \thing is intrinsically immutable, but can capture change via its associated \kw{VersionHistoryDAG}: a fresh
-\version of the \thing is created whenever a \gtag is changed. 
+The \modelgraph is based on an internal superclass called \itemground, which is simply a unique ID that can be
+associated with a \kw{VersionHistoryDAG}. Note that 
+an \itemground is intrinsically immutable, but can capture change via its associated \kw{VersionHistoryDAG}: a fresh
+\version of the \itemground is created whenever a \gtag is changed. 
 
-Ground's public API centers around three core object classes derived from \thing: {\node}, {\edge}, and {\graph}.
+Ground's public API centers around three core object classes derived from \itemground: {\node}, {\edge}, and {\graph}.
 Each of these subclasses has an associated subclass in the \versiongraph: \kw{NodeVersion}, \kw{EdgeVersion} and \kw{GraphVersion}. {\node}s and 
 {\edge}s are highlighted in the middle layer of Figure~\ref{fig:layers}, with the {\node}s projected visually onto 
 their associated versions in the other layers.
 
+
+\begin{figure}[H]
+\begin{scriptsize}
+% \begin{multicols}{2}
+\lstinputlisting{version.java}
+% \end{multicols}
+\end{scriptsize}
+% \vspace{2em}
+\caption{Java skeleton for Version classes in Common Ground. Methods have been elided. Full code is available at \texttt{https://github.com/ground-context/ground}.}
+\label{fig:versioncode}
+\end{figure}
+
 The \versiongraph allows for ad hoc {\gtag}s, but many applications desire more structure.
-To that end, the \modelgraph includes a subclass of \thing called {\structure}. A \structure is like a schema: a set of {\gtag}s that must be present. Unlike database schemas, the \structure class of Ground is versioned, via a \kw{StructureVersion} subclass in the \versiongraph.  If an \thing is associated with a \structure, each \version of the \thing is associated with a corresponding \kw{StructureVersion} and must define those {\gtag}s (along, optionally, with other ad hoc {\gtag}s.)
+To that end, the \modelgraph includes a subclass of \itemground called {\structure}. A \structure is like a schema: a set of {\gtag}s that must be present. Unlike database schemas, the \structure class of Ground is versioned, via a \kw{StructureVersion} subclass in the \versiongraph.  If an \itemground is associated with a \structure, each \version of the \itemground is associated with a corresponding \kw{StructureVersion} and must define those {\gtag}s (along, optionally, with other ad hoc {\gtag}s.)
 Together, {\gtag}s, {\structure}s and \kw{StructureVersion}s enable a breadth of metadata representations: from unstructured to semi-structured to structured.
 
 \smallitem{External Items and Schr\"{o}dinger Versioning}\\
+\jmh{We don't have External Items explicit in the pseudocode. Should we? If not we need to reword this 
+section to be less ``object-oriented'' and more conceptual.}
 We often wish to track items whose metadata is managed outside of Ground: canonical examples
 include GitHub repositories and Google Docs. Ground cannot automatically track these items as they change.
 They are represented in Ground by \kw{ExternalItem}s, with \kw {ExternalVersion}s that contain various tags: a \kw{timestamp}, optional \kw{cachedValue}, and parameters for accessing the
@@ -534,32 +510,46 @@ reference (e.g., port, protocol, URI, etc.)
 Whenever a Ground client uses the Aboveground API to access an a \kw{ExternalVersion}, this results in Ground fetching the object and generating a new \kw{ExternalVersion}, containing a new
 \kw{VersionID}, an updated timestamp and possibly an updated cached value. We refer to this as a \emph{Schr\"{o}dinger} versioning scheme: each time we observe an \kw{ExternalItem} it changes. This allows Ground to track the history of an external object \emph{as perceived} by Ground-enabled applications.
 
-\smallitem{LazyBundles: Compressed Relationships}
-The Common Ground model captures versions of relationships (e.g., \edge{}s) between versioned objects (e.g., \node{}s). Note that the relationships themselves are first-class objects with identity and tags. Implemented naively, the version history of these relationship objects can grow in unintended and undesirable ways. We address that problem by underlaying the logical Common Ground model with a physical compression scheme combined with lazy materialization of logical versions.
+\begin{figure}[bh]
+\begin{scriptsize}
+\lstinputlisting{model.java}
+\end{scriptsize}
+\caption{Java skeleton for Model classes.}
+\label{fig:modelcode}
+\end{figure}
+
+
+\smallitem{SuperVersions: An Implementation Detail.}
+\begin{figure}[th]
+\centering
+\includegraphics[width=\linewidth]{superversion.pdf}
+\caption{VersionGraph with 2 changes to a single node, in logical and physical (SuperVersion) representations.}
+\label{fig:superversion}
+\end{figure}
+The Common Ground model captures versions of relationships (e.g., \edge{}s) between versioned objects (e.g., \node{}s). The relationships themselves are first-class objects with identity and tags. Implemented naively, the version history of relationships can grow in unintended and undesirable ways. We address that problem by underlaying the logical Common Ground model with a physical compression scheme combined with lazy materialization of logical versions.
 
 Consider updating the current version 
 %$m_v$ 
-of a very central \node{} $M$
+of a central \node{} $M$
 with $n$ incident \edge{}s to neighbor \node{}s.
 Creating a new \kw{NodeVersion} for $M$ implicitly requires creating $n$ new \kw{EdgeVersion}s, one for each of the $n$ incident edges, to capture the connection between the new version of $M$ and the (unchanged!) versions of the adjacent nodes. More generally, the number of \kw{EdgeVersion}s grows as the product of node versioning and node fanout. 
 % $m_v$ is connected to versions of its $n$ neighboring \node{}s via \kw{EdgeVersion}s $e^1_v1 \ldots e^n_vn$.
  % If we create a new version $m_{v+1}$ of $M$, we implicitly need new \kw{EdgeVersions} for all the $n$ incident \edge{}s, to represent the fact that $m_{v+1}$ is connected to the (unchanged!) versions of the $n$ neighbor nodes. 
 
-We can remove the fanout factor using what we call a \kw{LazyBundle}, an implementation detail that does not change the logical metamodel of Common Ground. In essence, \kw{LazyBundle}s are compressed sets of \kw{EdgeVersion}s that all have one of their two endpoints in common. As an example, we return to a version $m_v$ of node $M$ and a version $n_w$ of one of the adjacent nodes $N_k$. If we change $M$ 100 times before we change $N$, there will be 100 logical \kw{EdgeVersion}s connecting $n_w$ to $m_v, \ldots, m_{v+100}$. Rather than eagerly materializing those \kw{EdgeVersion}s explicitly, we can store a \kw{LazyBundle} capturing the relationship between $w$ and the range $[v, v+100]$. More generally, in a branching version history, a \kw{LazyBundle} connects a single version of one item to a rooted subgraph of the versions of another item. We can use \kw{LazyBundle}s for any relationship between versioned objects: the \edge{}s between \node{}s, the membership of \node{}s and \edge{}s in \graph{}s, etc.
-
+We can mitigate the version factor by using a \kw{SuperVersion}, an implementation detail that does not change the logical metamodel of Common Ground. In essence, \kw{SuperVersion}s capture a compressed set of contiguous \kw{NodeVersion}s and their common adjacencies. If we introduce $k-1$ changes to version $v$ of node $M$ before we change any adjacent node, there will be $k$ logical \kw{EdgeVersion}s connecting $M$ to each of its neighbor \kw{NodeVersion}s. Rather than materializing those \kw{EdgeVersion}s, we can use a \kw{SuperVersion} capturing the relationship between each neighbor and the range $[v, vk]$ (Figure~\ref{fig:superversion}). The actual logical \kw{EdgeVersion}s can be materialized on demand by the Ground runtime. More generally, in a branching version history, a \kw{SuperVersion} captures a growing rooted subgraph of the \version{}s of one \itemground, along with all adjacent \version{}s. A \kw{SuperVersion} grows monotonically to encompass new \version{}s with identical adjacencies. Note that the \kw{SuperVersion} represents both a supernode \emph{and the adjacent edges to common nodes}; directionality of the adjacent edges is immaterial.   
+% We can use \kw{SuperVersion}s for any relationship between versioned \itemground{}s: the \edge{}s between \node{}s, the relationship of \kw{StructureVersion}s to \kw{RichVersion}s, etc. \jmh{This discussion is a bit broken because \itemground is a subclass of \version rather than the other way round.  Why is that?}
 
 
 \subsubsection{{\LineageGraph}s: Behavior}
-% \begin{figure}[ht]
-% \begin{scriptsize}
-% \begin{multicols}{2}
-% % \lstinputlisting{scala/crust.scala.txt}
-% \end{multicols}
-% \end{scriptsize}
-% \caption{\LineageGraph metamodel in Scala.}
-% \label{fig:crust}
-% \end{figure}
-The goal of the \lineagegraph layer is to capture usage information composed from the nodes and edges in the model graph.  
+\begin{figure}[bh]
+\begin{scriptsize}
+\lstinputlisting{lineage.java}
+\end{scriptsize}
+\caption{Java skeleton for Lineage classes.}
+\label{fig:lineagecode}
+\end{figure}
+
+The goal of the \lineagegraph layer is to capture usage information composed from the nodes and edges in the model graph (Figure~\ref{fig:lineagecode}.)  
 To facilitate data lineage, Common Ground depends on two specific items---
 principals and workflows---that we describe here.
 % These are the only two items in Common Ground that go beyond graph structure; they are fundamental to the semantic notion of lineage.
@@ -605,20 +595,21 @@ To extend the example, grit can be augmented to track files as well as repositor
 
 Lastly, we can model users and the actions they perform. Once more, each user will be represented by a \node, which will be updated whenever the attributes of the user change -- normally, not very often. There would be a \kw{LineageEdge} that represents the changes that a user has caused in the repository. Each \kw{LineageEdgeVersion} in this \kw{LineageEdge} points from the user \kw{NodeVersion} to the repository commit \kw{NodeVersion}, implying that the changes the user made are represented in this commit.
 
-The initial grit example was chosen to be simple but useful; of course it would need substantial extensions to capture every aspect of git's metadata, but it's unclear that users desire that level of detail. Moving beyond git, we believe that the generality of the Common Ground metamodel will allow users to capture a wide variety of use cases. We have currently developed basic extension libraries that allow Ground to capture relational metadata and file system metadata, in addition to git; we hope that more contributions will be forthcoming given the simplicity and utility of the Common Ground model.
+The initial grit example was chosen to be simple but useful; of course it would need substantial extensions to capture every aspect of git's metadata, but it's unclear that users desire that level of detail to be captured for integration with other context. Moving beyond git, we believe that the generality of the Common Ground metamodel will allow users to capture a wide variety of use cases. We have currently developed basic extension libraries that allow Ground to capture relational metadata and file system metadata, in addition to git; we hope that more contributions will be forthcoming given the simplicity and utility of the Common Ground model.
 
-\section{Ground \lowercase{v}0}
+\section{Ground 0}
 \label{sec:prototype}
 
 % \subsection{State of the System}
-Our initial version of Ground implements the Common Ground metamodel and provides REST APIs for interaction with the system. 
-It currently makes use of LinkedIn Gobblin for crawling and ingest and Apache Kafka for queueing and pub/sub.
+Our initial Version 0 of Ground implements the Common Ground metamodel and provides REST APIs for interaction with the system. 
+Referring back to Figure~\ref{fig:arch}, Ground 0 uses Apache Kafka for the aboveground API (to enable aboveground applications to subscribe to events), and to enable queuing of bulk underground APIs such as the Crawling/Ingest API.
+Ground 0 makes use of LinkedIn's Gobblin system for crawling and ingest from files, databases, web sources and the like.
 We have integrated and evaluated a number of backing stores for versioned storage, including PostgreSQL, Cassandra, TitanDB and Neo4j; we report on results later in this section.
-We are currently integrating ElasticSearch for text indexing and are still evaluating options for Authorization and Scheduling. 
+We are currently integrating ElasticSearch for text indexing and are still evaluating options for ID/Authorization and Workflow/Scheduling. 
 
 To exercise our initial design and provide immediate functionality,
 we built support for three sources of metadata most commonly used in the Big Data ecosystem: file metadata from HDFS, schemas from Hive, and code versioning from Git.
-To support HDFS, we extended Gobblin to extract file system metadata from its HDFS crawls and publish them to Ground's Kafka connector. The resulting metadata is then ingested into Ground, and notifications are published on a Kafka channel for applications to respond to. To support Hive, we built an API shim that allows Ground to serve as a drop-in replacement for the Hive Metastore.
+To support HDFS, we extended Gobblin to extract file system metadata from its HDFS crawls and publish to Ground's Kafka connector. The resulting metadata is then ingested into Ground, and notifications are published on a Kafka channel for applications to respond to. To support Hive, we built an API shim that allows Ground to serve as a drop-in replacement for the Hive Metastore.
 One key benefit of using Ground as Hive's relational catalog is Ground's built-in support for versioning, which---combined with the append-only nature of HDFS---makes it possible to \emph{time travel} and view Hive tables as they appeared in the past.  To support Git, we have built crawlers to extract Git history graphs as \kw{ExternalVersion}s in Ground. These three scenarios guided our design for Common Ground.
 
 Having initial validation of our metamodel on a breadth of scenarios, our next concern has been the efficiency of storing and querying information represented in the Common Ground metamodel, given both its general-purpose \modelgraph layer, and its support for versioning. To get an initial feeling for these issues, we began with two canonical use cases:
@@ -666,7 +657,7 @@ We acknowledge that with further tuning, these systems might perform better than
 
 
 \smallitem{PostgreSQL}. We normalize the Common Ground entities 
-(\thing, \version, etc.) into tables, and the relationships
+(\itemground, \version, etc.) into tables, and the relationships
 (e.g., \kw{EdgeVersion}) into tables with indexes on both sides. 
 The dwell time analysis amounts to retrieving all the sessions corresponding to a server version; it is simply a single-table look-up through an index. The result set was on the order of 100s of nodes per look-up.
 
@@ -679,7 +670,7 @@ Figure~\ref{fig:impact} shows that we were unable to get PostgreSQL to be within
 The Cassandra dwell time analysis query was identical to the Postgres query: a single table look-up which was aided by an index.
 Cassandra doesn't support recursive queries; for impact analysis, we wrapped Cassandra with JGraphT, an in-memory Java graph-processing library. We did not count the time taken to load the graph into JGraphT from Cassandra, hence Figure~\ref{fig:impact} shows a very optimistic view of Cassandra's performance for this query.
 
-\smallitem{Neo4j}. Neo4j is a (single-node) graph database, so modeling the Common Ground graphs was straightforward.
+\smallitem{Neo4j}. Neo4j is a (single-server) graph database, so modeling the Common Ground graphs was straightforward.
 The average Neo4j dwell time analysis was fast; the first few queries were markedly slow
 (${\sim}10$ seconds),
 but subsequent queries were far faster, presumably due to caching. 
@@ -692,7 +683,7 @@ The impact analysis query was significantly faster than any Postgres implementat
 
 \smallitembot
 While there is variance in our simple dwell time analysis lookups, the bigger divergence is in the impact analysis workload.
-We can expect impact analysis to traverse a small subgraph within a massive job history. Queries on small subgraphs should be very fast---ideally as fast as an in-memory graph system~\cite{mcsherry2015scalability}. JGraphT-over-Cassandra and Neo4j provide a baseline, though neither solution scales beyond one node. PostgreSQL and TitanDB do not appear to be viable even for these modest queries. Of these systems, only Cassandra and TitanDB are designed to scale beyond a single node.
+We can expect impact analysis to traverse a small subgraph within a massive job history. Queries on small subgraphs should be very fast---ideally as fast as an in-memory graph system~\cite{mcsherry2015scalability}. JGraphT-over-Cassandra and Neo4j provide a baseline, though neither solution scales beyond one server. PostgreSQL and TitanDB do not appear to be viable even for these modest queries. Of these systems, only Cassandra and TitanDB are designed to scale beyond a single server.
 
 % \section{Discussion}
 % \label{sec:discussion}
@@ -711,8 +702,8 @@ We can expect impact analysis to traverse a small subgraph within a massive job 
 \label{sec:relwork}
 % \joey{made a pass on this section and it looks good}
 Work related to this paper comes in a variety of categories. 
-For submission brevity, we focus on related system architectures and omit bibliography entries to systems easily found online. 
-An accepted version will contain a more scholarly bibliography.
+\jmh{Address this?  For submission brevity, we focus on related system architectures and omit bibliography entries to systems easily found online. 
+An accepted version will contain a more scholarly bibliography.}
 
 
 % Legacy 
@@ -726,12 +717,39 @@ Both provide graph models that inspired the Common Ground \modelgraph; neither p
 
 There is a broad space of efforts that illustrate the possibilities of data context. 
 There are many commercial applications and research projects for Aboveground tasks: cataloging, wrangling, lineage analysis, query and workflow management, information extraction, ontology management, etc. 
-OpenChorus and IBM LabBook provide overarching portals for collaboration.
-LinkedIn WhereHows, FINRA Herd and Google Goods are metadata services built to support data workflows in their respective organizations; Goods bundles what we call Underground services with various proprietary services we might describe as Aboveground applications.
+OpenChorus and IBM LabBook provide overarching portals for collaboration on data projects.
+LinkedIn WhereHows, FINRA Herd and Google Goods are metadata services built to support the evolving data workflows in their respective organizations. Goods is a particularly mature system, bundling what we call Underground services with various proprietary services we might describe as Aboveground applications.
 All of the above make use of specific metamodels customized to their needs. By contrast, Ground is focused on designing a reusable service to enable diverse applications and organizations to integrate their notions 
 of data context. 
 This shapes the core challenges and opportunities we are pursuing, and hopefully will encourage adoption and innovation.
 
+\section{Future Work}
+Ground is a deliberately simple system, defined by the Common Ground API and metamodel. In the spirit of agility, we view it as a work in progress. However, our hope is that the simplicity of the Ground model and architecture will allow enable evolution and innovation to happen outside the system core.
+
+\begin{itemize}
+	\item Raising the API closer to application needs:
+	\begin{itemize}
+		\item "orbits" for relational and others
+		\item ER/ORM-style specs rather than code
+	\end{itemize}
+	\item Storage systems. New class of DBMS! Also efficiency of versioned graph representations; SuperVersions are just one idea/example.
+	\item Connect to/enhance ongoing aboveground work in the community:
+	\begin{itemize} 
+		\item schema extraction: both automation and wrangling. Affection for DSLs: synthesis and UX.
+		\item entity extraction and related structure imposition
+		\item data wrangling and cleaning
+		\item data catalogs and profiling.
+		\item visualization and chart recommendations
+	\end{itemize}
+	\item Network effects. 
+	\begin{itemize}
+		\item The social network power of data organizations. Many have said it, but it has yet to really happen. Why? What's the Utility! Empower the apps above!
+		\item Multiplicative effects of different apps!
+	\end{itemize}
+	\item Reproducibility and governance. Combination of code and data issues. Connection to containers, VMs, orchestration scripts. Versioned data a la MIT work.
+\end{itemize}
+
+\jmh{reuse the below}
 Our initial assessment of storage engines suggests a need for more work: both a deeper evaluation of what exists and very likely designs for something new. There are many research papers and active workshops on graph databases (e.g., \cite{grades16}), but we found the leading systems (Neo4j, Titan) lacking. 
 Interest in no-overwrite databases has only recently reemerged, including the DataHub research project, and the Datomic, Pachyderm and Noms systems.  The combination of graphs and immutable versions
 appears to be a new challenge.
