@@ -724,35 +724,43 @@ of data context.
 This shapes the core challenges and opportunities we are pursuing, and hopefully will encourage adoption and innovation.
 
 \section{Future Work}
-Ground is a deliberately simple system, defined by the Common Ground API and metamodel. In the spirit of agility, we view it as a work in progress. However, our hope is that the simplicity of the Ground model and architecture will allow enable evolution and innovation to happen outside the system core.
+In the spirit of agility, we view Ground as a work in progress. Our intent is to keep Common Ground simple and stabilize it relatively quickly, with evolution and innovation happening largely outside the system core. In the main, our goal is to facilitate continued innovation from the community: in systems belowground, and algorithms and interfaces aboveground.
 
-\begin{itemize}
-	\item Raising the API closer to application needs:
-	\begin{itemize}
-		\item "orbits" for relational and others
-		\item ER/ORM-style specs rather than code
-	\end{itemize}
-	\item Storage systems. New class of DBMS! Also efficiency of versioned graph representations; SuperVersions are just one idea/example.
-	\item Connect to/enhance ongoing aboveground work in the community:
-	\begin{itemize} 
-		\item schema extraction: both automation and wrangling. Affection for DSLs: synthesis and UX.
-		\item entity extraction and related structure imposition
-		\item data wrangling and cleaning
-		\item data catalogs and profiling.
-		\item visualization and chart recommendations
-	\end{itemize}
-	\item Network effects. 
-	\begin{itemize}
-		\item The social network power of data organizations. Many have said it, but it has yet to really happen. Why? What's the Utility! Empower the apps above!
-		\item Multiplicative effects of different apps!
-	\end{itemize}
-	\item Reproducibility and governance. Combination of code and data issues. Connection to containers, VMs, orchestration scripts. Versioned data a la MIT work.
-\end{itemize}
+\subsection{Ground}
+Within Ground proper, we want to make it increasingly easy to use, by offering developers higher levels of abstraction for the existing Common Ground API.  One direction we envision is a library of common ``design patterns'' for typical data models. Many of the use cases we have encountered revolve around relational database metadata, so a design pattern for easily registering relational schemas is an obvious first step, and one that can build on our experience with our Hive metastore implementation. A related direction we hope to pursue is a more declarative interface for specifying models, involving simple relationships and constraints between collections or object classes. This would be a good fit for capturing metadata from typical database-backed applications, like those that use Object-Relational Mappings. From such high-level specifications, Ground could offer default (but customizable) logic for managing versioning and lineage.
 
-\jmh{reuse the below}
-Our initial assessment of storage engines suggests a need for more work: both a deeper evaluation of what exists and very likely designs for something new. There are many research papers and active workshops on graph databases (e.g., \cite{grades16}), but we found the leading systems (Neo4j, Titan) lacking. 
-Interest in no-overwrite databases has only recently reemerged, including the DataHub research project, and the Datomic, Pachyderm and Noms systems.  The combination of graphs and immutable versions
-appears to be a new challenge.
+\subsection{Underground}
+Underground, as we emphasize above, we see open questions regarding the suitability of current database systems for the needs of data context. Our initial assessment suggests a need for more work: both a deeper evaluation of what exists and very likely designs for something new. 
+
+As of now, part of the challenge is to understand relevant workloads for Ground deployments.  Our examples to date are limited, but given the diversity of participants in the early stage of the project we foresee a quick learning curve. Three simple patterns have emerged from early discussion: tag (attribute) search, wrangling/analysis of usage logs, and traversal (especially transitive closure) of graphs for lineage, modeling and version history. The right solution for this initial workload today is unclear on a number of fronts. First, existing systems for the three component workloads are quite different from each other; there is no obvious single solution. Second, there are no clear scalable open source ``winners'' in either log or graph processing. Leading log processing solutions like Splunk and SumoLogic are closed-source and the area is not well-studied in research. There are many research papers and active workshops on graph databases (e.g., \cite{grades16}), but we found the leading systems lacking.  Third, we are sensitive to the point that some problems---especially in graphs---prove to be smaller than expected, and ``database'' solutions can end up over-engineered for most use cases~\cite{mcsherry}. 
+
+Another challenge is our desire to maintain version history over time. Interest in no-overwrite databases has only recently reemerged, including the DataHub research project~\cite{datahub}, and the Datomic, Pachyderm and Noms open source systems. Our early users have made it clear that they like the idea of versioning, but they do not view it as a high-value service in every deployment; even when feasible it is often only worth supporting via inexpensive deep storage services. As a result, we cannot expect to provide excellent performance on general ad-hoc temporal queries; some tradeoffs will have to be made to optimize for common high-value usage.  
+
+A cross-cutting challenge in any of these contexts is the consistency or transactional semantics across underground subsystems---particularly if databases or indices are federated across different components.
+
+\subsection{Aboveground}
+There is a wide range of application-level technology that we would like to see deployed in a common data context environment. 
+
+\smallitem{Context Extraction.}
+One primary area of interest is extracting context from raw sources. Schema extraction is one important example, in a spectrum from automated techniques to crowd-assistance to human-guided metadata wrangling; sample references include~\cite{flashextract,tamr,wrangler} respectively. Another is entity extraction and resolution from data, and the broader category of ontology management; examples citations here include~\cite{daisy,deepdive,ontology}. Turning from data to code, work on extracting data lineage is broad and ranges from traditional database provenance in SQL to software synthesis and information flow control in more imperative languages to harnesses for extracting behavior from command-line workflows; sample references include~\cite{cheney2009provenance,synthesis,ifc,burrito}. All of these technologies can provide useful data context in settings where today there is none; some of these techniques themselves will improve if trained on context from other applications.
+
+\smallitem{User Exhaust.}
+The above are all explicit efforts to drive context extraction ``bottom-up'' from raw sources. However we suspect that the most interesting context comes from users solving specific problems: if somebody spends significant time with data or code, their effort is usually reflecting the needs of some high-value application context. Thus we're very excited about capturing ``exhaust'' from data-centric tools. Tools for data wrangling and integration are of particular interest because they exist in a critical stage of the data lifecycle, when users are raising the value of ``raw'' data into a meaningful ``cooked'' form that fits an application context that may be otherwise absent from the data. Notebooks for exploratory data analysis provide similar context on how data is being used, particularly in their native habitat of technical environments with relatively small datasets. Visualization and Business Intelligence tools tend to work with relatively refined data, but can still provide useful clues about the ways in which data is being analyzed---if for no other purpose than to suggest useful visualizations to other users. 
+
+\smallitem{Socio-Technical Networks.}
+In all of these ``data exhaust'' cases, there is a simple latent usage relationship: the linkage between a users, applications and datasets. We hypothesize that tracking the network of this usage across an organization can provide significant insights into the way an organization functions---and ways it can be improved. We are not the first to suggest that the socio-technical network behavior of a data-centric organization has value (see, e.g., collaborative visual analysis~\cite{manyeyes,willett}). Yet to date the benefits of ``collective intelligence'' in data organizations have not been widespread in software. It is an open question why this is this case. One possibility is scale---we have yet to observe deployments where the there is enough recorded data usage to produce a signal. This should be improving quickly. Another is the historically siloed nature of application context, which a service like Ground can improve. Finally, we are only now seeing the widespread deployment of intelligent applications that can actually surface the value of context: e.g. to suggest data sets, transformations or visualizations.
+% We hypothesize another possible reason: applications have been unable to harvest this information broadly and demonstrate its utility. As an example, consider a data wrangling application like Wrangler that suggests transformations to users. If Wrangler were aware of all the file formats and schemas in the organization, all the dashboard visualizations, all the science notebooks and external scripts, and all the user affinities to these entities, it could do a far better job anticipating the needs of a particular user opening a particular dataset---even if that dataset were previously-unseen. Similar reasoning applies to visualization suggestions in BI software, model selection in machine learning notebooks, and many other tools that should be ``data-assisted''. 
+Ground is an environment not only to collect data context, but to offer it up via a uniform API so applications can demonstrate its utility. We believe this can be a virtuous cycle, where innovative applications that are ``good citizens'' in generating contextual metadata will likely benefit from context as well.
+
+\smallitem{Governance and Reproducibility}
+Data governance is a drab-sounding topic, but one that is critical to organizations that are regulated or otherwise responsible to data producers---often individual members of society with little technical recourse. Simple assurances like enforcing access control or auditing usage become extremely complex for organizations that deploy networks of complex software across multiple sites and sub-organizations. This is hard for well-intentioned organizations, and opaque for the broader community. Improvements to this state of practice would be welcome on all fronts. To begin, contextual information needs to be easy to capture in a common infrastructure. Ground is an effort to enable that beginning, but there is much more to be done in terms of capturing and authenticating sufficient data lineage for governance---whether in legacy or de novo systems.
+
+Closer to home in the research community, apparently simple tasks like reproducing purely software-driven experiments prove increasingly difficult.  We of course have to deal with versions of our own software as well as language libraries and operating systems. Virtualization technologies like containers and virtual machines prevent the need to reproduce hardware, but add their own complexities. It is a wide open question how best to knit together all the moving parts of a software environment for reproducibility, even using the latest tools: software version control systems like git, container systems like docker, virtual machines, and orchestration languages like Kubernetes---not to mention versioned metadata and data, for which there are no popular tools yet. We hope Ground can provide a context where these systems can be put together and these issues explored.
+
+\smallitem{Managing Services That Learn}
+\jmh{Joey, do you want to pop a paragraph or 2 in here?}
+\smallitembot
+
 
 \section{Conclusion}
 \label{sec:conclusion}
