@@ -11,3 +11,9 @@ public class LineageEdgeVersion extends RichVersion {
     // id of the RichVersion that this LEV points to
     private String toId;
 }
+
+public class Principal extends Node {
+}
+
+public class Workflow extends Graph {
+}
