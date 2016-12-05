@@ -251,9 +251,9 @@ Our goal is to address practical problems for the Big Data community in the shor
 
 In the remainder of the paper we illustrate the opportunities in this space, design requirements for solutions, and our initial efforts to tackle these challenges in open source.
 
-\section{Ground: Diverse Use Cases}
+\section{Diverse Use Cases}
 \label{sec:scenarios}
-\vikram{I don't think we should have Ground before the colon. Maybe "Diverse Use Cases for Data Context?}
+% \vikram{I don't think we should have Ground before the colon. Maybe "Diverse Use Cases for Data Context?}
 % \jmh{can chop}
 % Data Context can assist with many goals in a multi-user, data-driven organization. For example, it can be used to assess end-to-end data quality validation for complex workflows; it can form the basis of experiment management and reproducibility; it can help smooth research-to-production data science lifecycles via sharing of code and data products; it can enable sensitive data to be tracked across programs and users in an organization; and it can be used to gather data and performance statistics that can be used by components to optimize their decisions. 
 To illustrate the potential of the Ground data context service, we describe two concrete scenarios in which Ground
@@ -447,8 +447,8 @@ The Common Ground metamodel is based on a layered graph structure shown in Figur
 We begin with the \versiongraph layer of Common Ground, which captures changes corresponding to the \emph{C} in the ABCs of data context (Figure~\ref{fig:versioncode}).
 This layer bootstraps the representation of all information in Ground, by providing the classes upon which all other layers are based. These classes and their subclasses are the only information in Common Ground that is not itself versioned; this is why it forms the base of the metamodel.
 
-The main atom of our metamodel is the \version, which is simply a globally unique identifier; it represents an immutable version of some object; we
-depict \version{}s via the small circles in the bottom layer of Figure~\ref{fig:layers}. \vikram{two semicolons in this sentence.}
+The main atom of our metamodel is the \version, which is simply a globally unique identifier; it represents an immutable version of some object. We
+depict \version{}s via the small circles in the bottom layer of Figure~\ref{fig:layers}.
 Ground links {\version}s into \kw{VersionHistoryDAG}s via \kw{VersionSuccessor} edges
 indicating that one version is the descendant of another (the short dark edges in the bottom of Figure~\ref{fig:layers}.)
 Type parametrization ensures that all of the \kw{VersionSuccessor}s in a given DAG link the same subclass of {\version}s together.
@@ -590,7 +590,7 @@ relational database catalogs, or scientific collaborations. \kw{StructureVersion
 \begin{figure*}[th]
 \centering
 \includegraphics[width=0.75\linewidth]{grit.pdf}
-\caption{An illustration of the data structure involved in the grit example.}
+\caption{An illustration of the data structure involved in the grit example. \jmh{Clean up}}
 \label{fig:grit}
 \end{figure*}
 
@@ -598,7 +598,7 @@ relational database catalogs, or scientific collaborations. \kw{StructureVersion
 To demonstrate the flexibility and expected usage of our model, we discuss an aboveground service we built called Grit: the Ground-git tracker. Grit maps metadata from git repositories into Ground, allowing users to easily associate contextual information about code (e.g., transformation or analysis scripts) with metadata about data (the inputs and outputs of the script).
 
 % \jmh{Maybe we want to illustrate the use of Structures via commitHash on the Repo node, and the use of Tags via a Ground user annotation?}
-Consider a git repository on Github, such as \texttt{ground-context/ground}. This repository's identity is represented by a \node in Ground (the black circle in Figure~\ref{fig:grit}), which we will call $R$ for the sake of discussion. Every time a developer commits changes to the repository, git generates a unique hash that corresponds to a new version of the repository. Each one of these versions will be associated with a \structure that specifies two tags, a \kw{commitHash} and a \kw{commitMessage} (not pictured). Every version of the repository must have tags with both those keys specified.  grit registers a hook with Github to be notified about these commits and their hashes. Upon being notified of a new commit hash, grit calls a Ground API to register this new version of $R$; Ground stores this as a \kw{NodeVersion} associated with $R$, containing a \kw{commitHash} tag. The API also allows grit to specify the commit hashes that preceded this new version; Ground internally relates each \kw{NodeVersion} to its predecessor(s) via \kw{VersionSuccessor}s\footnote{Note that aboveground applications do not explicitly create \kw{VersionSuccessor}s; the Ground API for registering a new \kw{NodeVersion} and its parent(s) captures information that Ground uses to generate the \kw{VersionSuccessor}s internally.} (the black arrows in Figure~\ref{fig:grit}). 
+Consider a git repository on Github, such as \linebreak \texttt{ground-context/ground}. This repository's identity is represented by a \node in Ground (the black circle in Figure~\ref{fig:grit}), which we will call $R$ for the sake of discussion. Every time a developer commits changes to the repository, git generates a unique hash that corresponds to a new version of the repository. Each one of these versions will be associated with a \structure that specifies two tags, a \kw{commitHash} and a \kw{commitMessage} (not pictured); the \structure ensures that every version of $R$ will have both those tags.  Grit registers a hook with Github to be notified about these commits and their hashes. Upon being notified of a new commit hash, grit calls a Ground API to register this new version of $R$; Ground stores this as a \kw{NodeVersion} associated with $R$, containing a \kw{commitHash} tag. The API also allows grit to specify the commit hashes that preceded this new version; Ground internally relates each \kw{NodeVersion} to its predecessor(s) via \kw{VersionSuccessor}s\footnote{Note that aboveground applications do not explicitly create \kw{VersionSuccessor}s; the Ground API for registering a new \kw{NodeVersion} and its parent(s) captures information that Ground uses to generate the \kw{VersionSuccessor}s internally.} (the black arrows in Figure~\ref{fig:grit}). 
 
 To extend the example, grit can be augmented to track files (the yellow circle in Figure~\ref{fig:grit}) as well as repositories. Grit represents each file in Ground via a \node, with an \edge (the blue arrow in Figure~\ref{fig:grit}) between each file and the repository \node. Upon hearing of a commit from Github, grit interrogates git to determine which files changed in that commit. For a given file $F$ that has changed, Grit creates a new \kw{NodeVersion} with metadata about the file (e.g. a size and checksum). Moreover, a new \kw{EdgeVersion} associates the new file version with the new repository version.
 
