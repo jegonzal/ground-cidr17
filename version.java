@@ -23,26 +23,20 @@ public class VersionHistoryDAG<T extends Version> {
 public class RichVersion extends Version {
     // the map of Keys to Tags associated with this RichVersion
     private Map<String, Tag> tags;
-    @UnwrapValidatedValue
     // the StructureVersion associated with this RichVersion
     private String structureVersionId;
-    @UnwrapValidatedValue
     // the optional reference associated with this RichVersion
     private String reference;
-    @UnwrapValidatedValue
     // the optional parameters associated with this RichVersion if there is a reference
     private Map<String, String> parameters;
 }
 
 public class Tag {
     private String versionId;
-    @NotEmpty
     // the Key of the Tag
     private String key;
-    @UnwrapValidatedValue
     // the optional Value of the Tag
     private Object value;
-    @UnwrapValidatedValue
     // the Type of the Value if it exists
     private GroundType valueType;
 }
