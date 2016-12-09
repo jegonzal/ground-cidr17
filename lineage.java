@@ -1,14 +1,7 @@
-public class LineageEdge extends Item<LineageEdgeVersion> {
-    // the name of this LineageEdge
-    private String name;
-}
-
-public class LineageEdgeVersion extends RichVersion {
-    // id of the LineageEdge containing this Version
-    private String lineageEdgeId;
-    // id of the RichVersion that this LEV originates from
+public class LineageEdge extends RichVersion {
+    // id of the RichVersion that this LE originates from
     private String fromId;
-    // id of the RichVersion that this LEV points to
+    // id of the RichVersion that this LE points to
     private String toId;
 }
 
