@@ -754,11 +754,25 @@ Data governance sounds a bit drab, but it is critical to organizations that are 
 Closer to home in the research community, apparently simple tasks like reproducing purely software-driven experiments prove increasingly difficult.  We of course have to deal with versions of our own software as well as language libraries and operating systems. Virtualization technologies like containers and virtual machines prevent the need to reproduce hardware, but add their own complexities. It is a wide open question how best to knit together all the moving parts of a software environment for reproducibility, even using the latest tools: software version control systems like git, container systems like docker, virtual machines, and orchestration languages like Kubernetes---not to mention versioned metadata and data, for which there are no popular tools yet. We hope Ground can provide a context where these systems can be put together and these issues explored.
 
 \smallitem{Managing Services That Learn}
-Machine learning powered service from content recommendation to risk management and fraud detection are quickly becoming common place.
-These services critically depend on up-to-date data to train effective models.
-Often this data is derived from multiple sources (e.g., click streams, content catalogs, and purchase histories).
-We believe that by connecting commonly used modeling frameworks (e.g., scikit-learn and TensorFlow) to ground we will be able to better identify the correct data to train models and automatically update models as data changes. 
-Furthermore, by registering models directly within ground, we will be able to identify and track data dependencies and address many of the problems with machine learning in production outlined by Sculley et al. in \cite{sculley2}.
+Machine learning powered service from content recommendation to risk management and fraud detection are being deployed in many applications.
+These services depend critically on up-to-date data to train accurate models.
+Often these data are derived from multiple sources (e.g., click streams, content catalogs, and purchase histories).
+We believe that by connecting commonly used modeling frameworks (e.g., scikit-learn and TensorFlow) to Ground we will be able to better identify the correct data to train models and automatically update models as data changes. 
+Furthermore, by registering models directly with Ground, we will be able to identify and track data dependencies and address many of the challenges production machine learning outlined by Sculley et al. in \cite{sculley2}.
+
+
+
+Once deployed, machine learning services are notoriously difficult to manage.  
+An interesting area of future research will be connecting prediction serving platforms (e.g., Velox~\cite{Crankshaw15} and TensorFlow Serving~\cite{tfserving}) to Ground.
+Integration with Ground will enable prediction serving systems to attribute prediction errors to the corresponding training data and improve decision auditing by capturing the context in which decisions were made.
+Furthermore, as prediction services are composed (e.g., genre prediction and content scoring), Ground can provide a broader view of these services and help isolating failing models. 
+
+
+
+
+
+
+
 
 
 
