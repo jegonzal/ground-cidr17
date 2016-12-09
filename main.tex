@@ -753,11 +753,11 @@ Data governance sounds a bit drab, but it is critical to organizations that are 
 
 Closer to home in the research community, apparently simple tasks like reproducing purely software-driven experiments prove increasingly difficult.  We of course have to deal with versions of our own software as well as language libraries and operating systems. Virtualization technologies like containers and virtual machines prevent the need to reproduce hardware, but add their own complexities. It is a wide open question how best to knit together all the moving parts of a software environment for reproducibility, even using the latest tools: software version control systems like git, container systems like docker, virtual machines, and orchestration languages like Kubernetes---not to mention versioned metadata and data, for which there are no popular tools yet. We hope Ground can provide a context where these systems can be put together and these issues explored.
 
-\smallitem{Managing Services That Learn}
-Machine learning powered service from content recommendation to risk management and fraud detection are being deployed in many applications.
+\smallitem{Managing Services That Learn.}
+Machine learning powered service from content recommendation to risk management and fraud detection are being widely deployed.
 These services depend critically on up-to-date data to train accurate models.
 Often these data are derived from multiple sources (e.g., click streams, content catalogs, and purchase histories).
-We believe that by connecting commonly used modeling frameworks (e.g., scikit-learn and TensorFlow) to Ground we will be able to better identify the correct data to train models and automatically update models as data changes. 
+We believe that by connecting commonly used modeling frameworks (e.g., scikit-learn and TensorFlow) to Ground we will be able to better identify the correct data to train models and automatically update models as new data arrives. 
 Furthermore, by registering models directly with Ground, we will be able to identify and track data dependencies and address many of the challenges production machine learning outlined by Sculley et al. in \cite{sculley2}.
 
 
